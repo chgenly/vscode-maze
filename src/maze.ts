@@ -31,6 +31,7 @@ export class Maze {
     constructor(public width: number, public height: number) {
         this.verticalWalls = [];
         this.horizontalWalls = [];
+        console.log("maze constructor");
         this.cells = [];
         for (var i = 0; i <= height; ++i) {
             this.verticalWalls[i] = [];
@@ -168,7 +169,7 @@ export class Maze {
             this.horizontalWalls[row][col] && this.horizontalWalls[row+1][col];
     }
 
-    private print(): void {
+    print(): void {
         console.log("print");
         var s: string;
         for (var row = 0; row <= this.height; ++row) {
@@ -188,3 +189,4 @@ export class Maze {
         }
     }
 }
+

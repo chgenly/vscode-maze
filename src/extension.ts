@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
   var panel: vscode.WebviewPanel | undefined;
@@ -11,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
         'Maze by Genly', // Title of the panel displayed to the user
         vscode.ViewColumn.One, // Editor column to show the new webview panel in.
         {
-          localResourceRoots: [],
+          // localResourceRoots: [],
           enableScripts: true,
           //localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')]
         } // Webview options. No local resource access.
@@ -28,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
             break;
         }
       });
-      panel.webview.html = getWebviewContent();
+      getWebviewContent(context, panel);
       panel.onDidDispose(() => panel = undefined);
       vscode.window.showInformationMessage("Hello, this is the maze maker!");
     }),
@@ -45,35 +47,12 @@ export function activate(context: vscode.ExtensionContext) {
   );
 }
 
-function getWebviewContent(): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maze</title>
-</head>
-<body>
-  <h1>Maze</h1>
-    <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="300" />
-    <script>
-    // Handle the message inside the webview
-        window.addEventListener('message', event => {
+function getWebviewContent(context: vscode.ExtensionContext, panel: vscode.WebviewPanel): void {
+  const htmlPath: vscode.Uri = vscode.Uri.file(path.join(context.extensionPath, 'html', 'index.html'));
+  const mazePath: vscode.Uri = vscode.Uri.file(path.join(context.extensionPath, 'dist', 'maze.js'));
+  const mazeUri: vscode.Uri = panel.webview.asWebviewUri(mazePath);
 
-            const message = event.data; // The JSON data our extension sent
-            const vscode = acquireVsCodeApi();
-            vscode.postMessage({
-              command: 'alert',
-              text: message
-            });
-            switch (message.command) {
-                case 'refactor':
-                    count = Math.ceil(count * 0.5);
-                    counter.textContent = count;
-                    break;
-            }
-        });
-    </script>
-</body>
-</html>`;
+  const html = fs.readFileSync(htmlPath.fsPath, 'utf8');
+  const html2  = html.replace("${maze_js}", mazeUri.toString());
+  panel.webview.html = html2;
 }
