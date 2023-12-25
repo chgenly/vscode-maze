@@ -52,7 +52,7 @@ function getWebviewContent(context: vscode.ExtensionContext, panel: vscode.Webvi
   const mazePath: vscode.Uri = vscode.Uri.file(path.join(context.extensionPath, 'dist', 'maze.js'));
   const mazeUri: vscode.Uri = panel.webview.asWebviewUri(mazePath);
 
-  const html = fs.readFileSync(htmlPath.fsPath, 'utf8');
-  const html2  = html.replace("${maze_js}", mazeUri.toString());
-  panel.webview.html = html2;
+  var html = fs.readFileSync(htmlPath.fsPath, 'utf8');
+  html = html.replace("${maze_js}", mazeUri.toString());
+  panel.webview.html = html;
 }

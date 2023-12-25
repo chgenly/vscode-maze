@@ -6,15 +6,15 @@
     <title>Maze</title>
     <script src="${maze_js}"></script>
 </head>
-<body>
+<body onload="go()">
   <h1>Maze</h1>
     <script>
-        var m = new Maze(10, 10);
-        m.generate();
-        m.print();
-    // Handle the message inside the webview
+        console.log("start of go ".concat(window))
+        function go() {
+            mz.top(document.getElementById("canvas"));
+        }
+        // Handle the message inside the webview
         window.addEventListener('message', event => {
-
             const message = event.data; // The JSON data our extension sent
             const vscode = acquireVsCodeApi();
             vscode.postMessage({
@@ -29,6 +29,6 @@
             }
         });
     </script>
-    <canvas width="100%" height="100%"></canvas>
+    <canvas id="canvas" width="1000" height="1000"></canvas>
 </body>
 </html>

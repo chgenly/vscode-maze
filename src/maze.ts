@@ -1,12 +1,14 @@
-type Cursor = [number, number];
-enum Direction { up = "up", down = "down", left = "left", right = "right" };
+export type Cursor = [number, number];
+export enum Direction { up = "up", down = "down", left = "left", right = "right" };
 function getAllDirections(): [Direction, Direction, Direction, Direction] {
     return [Direction.up, Direction.down, Direction.left, Direction.right];
 }
 function shuffle<T>(array: T[]): T[] {
     return array.sort(() => Math.random() - 0.5);
 };
-
+export interface MazeListener {
+    draw(cursor: Cursor, dir: Direction, open: boolean): void;    
+}
 export class Maze {
     /**
      * Vertical walls [row][column].  True if a wall is present.
@@ -28,23 +30,46 @@ export class Maze {
 
     usedCells: number = 0;
 
+    listener: MazeListener | null = null;
+
     constructor(public width: number, public height: number) {
+        this.clear();
+        this.verticalWalls = [[]];
+        this.horizontalWalls = [[]];
+        this.cells = [[]];
+    }
+
+    public setDraw(listener: MazeListener): void {
+        this.listener = listener;
+    }
+
+    public clear(): void {
         this.verticalWalls = [];
         this.horizontalWalls = [];
         console.log("maze constructor");
         this.cells = [];
-        for (var i = 0; i <= height; ++i) {
-            this.verticalWalls[i] = [];
-            this.horizontalWalls[i] = [];
-            for (var j = 0; j <= width; ++j) {
-                this.verticalWalls[i][j] = true;
-                this.horizontalWalls[i][j] = true;
+        for (var row = 0; row <= this.height; ++row) {
+            this.verticalWalls[row] = [];
+            this.horizontalWalls[row] = [];
+            for (var col = 0; col <= this.width; ++col) {
+                if (row !== this.height) {
+                    this.verticalWalls[row][col] = true;
+                    if (this.listener !== null) {
+                        this.listener.draw([row, col], Direction.left, false);
+                    }
+                }
+                if (col !== this.width) {
+                    this.horizontalWalls[row][col] = true;
+                    if (this.listener !== null) {
+                        this.listener.draw([row, col], Direction.up, false);
+                    }
+                }
             }
         }
-        for (var i = 0; i < height; ++i) {
-            this.cells[i] = [];
-            for (var j = 0; j < width; ++j) {
-                this.cells[i][j] = false;
+        for (var row = 0; row < this.height; ++row) {
+            this.cells[row] = [];
+            for (var col = 0; col < this.width; ++col) {
+                this.cells[row][col] = false;
             }
         }
     }
@@ -111,7 +136,7 @@ export class Maze {
         switch (dir) {
             case Direction.up:
                 this.openWall(this.horizontalWalls, cursor);
-                break;
+                 break;
             case Direction.down:
                 this.openWall(this.horizontalWalls, [cursor[0] + 1, cursor[1]]);
                 break;
@@ -119,8 +144,11 @@ export class Maze {
                 this.openWall(this.verticalWalls, cursor);
                 break;
             case Direction.right:
-                this.openWall(this.verticalWalls, [cursor[0], cursor[1] + 1]);
+                this.openWall(this.verticalWalls, [cursor[0], cursor[1]+1]);
                 break;
+        }
+        if (this.listener !== null) {
+            this.listener.draw(cursor, dir, true);
         }
     }
 
@@ -169,7 +197,7 @@ export class Maze {
             this.horizontalWalls[row][col] && this.horizontalWalls[row+1][col];
     }
 
-    print(): void {
+    public print(): void {
         console.log("print");
         var s: string;
         for (var row = 0; row <= this.height; ++row) {
