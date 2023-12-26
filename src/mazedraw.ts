@@ -1,11 +1,12 @@
-import {Maze, Direction, Cursor, MazeListener} from './maze.js';
+import {Maze, Direction, Cursor, CursorDirectionAndOpen} from './maze.js';
 
-export class MazeDraw implements MazeListener {
+export class MazeDraw {
     private ctx: CanvasRenderingContext2D;
     private width: number;
     private height: number;
     private cellLen = 20;
     private lineWidth = 4;
+
     public constructor(canvas: HTMLCanvasElement) {
         console.log(`canvas=${canvas}`);
         const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d');
@@ -17,7 +18,7 @@ export class MazeDraw implements MazeListener {
         this.ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-    draw(cursor: Cursor, dir: Direction, open: boolean): void {
+    public draw(cursor: Cursor, dir: Direction, open: boolean): void {
         var x1, y1, w, h;
         const delta = open ? this.lineWidth : 0;
         switch(dir) {

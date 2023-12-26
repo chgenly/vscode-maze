@@ -1,4 +1,5 @@
 export type Cursor = [number, number];
+export type CursorDirectionAndOpen = [Cursor, Direction, boolean];
 export enum Direction { up = "up", down = "down", left = "left", right = "right" };
 function getAllDirections(): [Direction, Direction, Direction, Direction] {
     return [Direction.up, Direction.down, Direction.left, Direction.right];
@@ -6,9 +7,6 @@ function getAllDirections(): [Direction, Direction, Direction, Direction] {
 function shuffle<T>(array: T[]): T[] {
     return array.sort(() => Math.random() - 0.5);
 };
-export interface MazeListener {
-    draw(cursor: Cursor, dir: Direction, open: boolean): void;    
-}
 export class Maze {
     /**
      * Vertical walls [row][column].  True if a wall is present.
@@ -30,8 +28,6 @@ export class Maze {
 
     usedCells: number = 0;
 
-    listener: MazeListener | null = null;
-
     constructor(public width: number, public height: number) {
         this.clear();
         this.verticalWalls = [[]];
@@ -39,11 +35,7 @@ export class Maze {
         this.cells = [[]];
     }
 
-    public setDraw(listener: MazeListener): void {
-        this.listener = listener;
-    }
-
-    public clear(): void {
+    public* clear(): Generator<CursorDirectionAndOpen> {
         this.verticalWalls = [];
         this.horizontalWalls = [];
         console.log("maze constructor");
@@ -54,15 +46,11 @@ export class Maze {
             for (var col = 0; col <= this.width; ++col) {
                 if (row !== this.height) {
                     this.verticalWalls[row][col] = true;
-                    if (this.listener !== null) {
-                        this.listener.draw([row, col], Direction.left, false);
-                    }
+                    yield [[row, col], Direction.left, false];
                 }
                 if (col !== this.width) {
                     this.horizontalWalls[row][col] = true;
-                    if (this.listener !== null) {
-                        this.listener.draw([row, col], Direction.up, false);
-                    }
+                    yield [[row, col], Direction.up, false];
                 }
             }
         }
@@ -74,13 +62,14 @@ export class Maze {
         }
     }
 
-    public generate(): void {
+    public* generate(): Generator<CursorDirectionAndOpen> {
         var row: number, col: number;
 
         row = 0;
         col = Math.floor(Math.random() * this.width);
         var cursor: Cursor = [row, col];
         this.openWallInDirection(cursor, Direction.up);
+        yield [cursor, Direction.up, true];
 
         const totalCells = this.width * this.height;
         while (this.usedCells < totalCells) {
@@ -89,6 +78,7 @@ export class Maze {
                 this.advanceToUsed(cursor);
             } else {
                 this.openWallInDirection(cursor, dir);
+                yield [cursor, dir, true];
                 this.moveCursorInDirection(cursor, dir);
             }
         }
@@ -97,6 +87,7 @@ export class Maze {
         col = Math.floor(Math.random() * this.width);
         var cursor: Cursor = [row, col];
         this.openWallInDirection(cursor, Direction.up);
+        yield [cursor, Direction.up, true];
     }
 
     private moveCursorInDirection(cursor: Cursor, dir: Direction): void {
@@ -146,9 +137,6 @@ export class Maze {
             case Direction.right:
                 this.openWall(this.verticalWalls, [cursor[0], cursor[1]+1]);
                 break;
-        }
-        if (this.listener !== null) {
-            this.listener.draw(cursor, dir, true);
         }
     }
 
