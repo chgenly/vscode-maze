@@ -2,8 +2,18 @@ import {CursorDirectionAndOpen, Maze} from "./maze.js";
 import {MazeDraw} from "./mazedraw.js";
 
 export function top(canvas: HTMLCanvasElement) {
-    const maze = new Maze(10,10);
-    const mazeDraw = new MazeDraw(canvas);
+
+
+    const map: StylePropertyMapReadOnly | undefined = canvas.parentElement?.computedStyleMap();
+    if (map !== undefined) {
+        const bg2 = map.get("background-color");
+        console.log(`bg2=${bg2}`);
+    }
+    const maze = new Maze(30,30);
+    const lineWidth = 4;
+    const cellWidth = (canvas.width-lineWidth) / maze.width;
+    const cellHeight = (canvas.height-lineWidth) / maze.height;
+    const mazeDraw = new MazeDraw(canvas, cellWidth, cellHeight, lineWidth);
     for(const d of maze.clear()) {
         mazeDraw.draw(d[0], d[1], d[2]);
     }
