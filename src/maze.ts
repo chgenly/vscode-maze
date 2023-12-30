@@ -28,11 +28,14 @@ export class Maze {
 
     usedCells: number = 0;
 
+    totalCells: number;
+
     constructor(public width: number, public height: number) {
         this.clear();
         this.verticalWalls = [[]];
         this.horizontalWalls = [[]];
         this.cells = [[]];
+        this.totalCells = width*height;
     }
 
     public* clear(): Generator<CursorDirectionAndOpen> {

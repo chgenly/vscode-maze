@@ -1,9 +1,9 @@
 import {CursorDirectionAndOpen, Maze} from "./maze.js";
 import {MazeDraw} from "./mazedraw.js";
 
+let vscode = acquireVsCodeApi();
+
 export function top(canvas: HTMLCanvasElement) {
-
-
     const map: StylePropertyMapReadOnly | undefined = canvas.parentElement?.computedStyleMap();
     if (map !== undefined) {
         const bg2 = map.get("background-color");
@@ -16,9 +16,10 @@ export function top(canvas: HTMLCanvasElement) {
     const mazeDraw = new MazeDraw(canvas, cellWidth, cellHeight, lineWidth);
     for(const d of maze.clear()) {
         mazeDraw.draw(d[0], d[1], d[2]);
+        vscode.postMessage({command: "status", used: maze.usedCells, total: maze.totalCells});
     }
     const it = maze.generate();
-    drawSlowly(mazeDraw, it);
+    drawSlowly(maze, mazeDraw, it);
 }
 
 /**
@@ -28,14 +29,16 @@ export function top(canvas: HTMLCanvasElement) {
  * drew it in a loop, the windowing system would only draw
  * the final result, not step by step.
  */
-function drawSlowly(mazeDraw: MazeDraw, it: Generator<CursorDirectionAndOpen>): void {
+function drawSlowly(maze: Maze, mazeDraw: MazeDraw, it: Generator<CursorDirectionAndOpen>): void {
     const res = it.next();
     if (!res.done)  {
         const v = res.value;
         console.log("drawing");
         mazeDraw.draw(v[0], v[1], v[2]);
-        setTimeout(() => drawSlowly(mazeDraw, it), 100);
+        vscode.postMessage({command: "status", used: maze.usedCells, total: maze.totalCells});
+        setTimeout(() => drawSlowly(maze, mazeDraw, it), 100);
     } else {
         console.log("drawing done");
     }
 }
+

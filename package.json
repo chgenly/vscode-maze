@@ -69,5 +69,8 @@
     "vsce": "^2.15.0",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@types/vscode-webview": "^1.57.4"
   }
 }

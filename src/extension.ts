@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
+let sbi: vscode.StatusBarItem | undefined;
+
 export function activate(context: vscode.ExtensionContext) {
   var panel: vscode.WebviewPanel | undefined;
   context.subscriptions.push(
@@ -28,11 +30,13 @@ export function activate(context: vscode.ExtensionContext) {
           case "alert":
             vscode.window.showInformationMessage("Webview alert: ".concat(JSON.stringify(message)));  
             break;
+          case "status":
+            updateStatusBarItem(message.used, message.total);
         }
       });
       getWebviewContent(context, panel);
       panel.onDidDispose(() => panel = undefined);
-      vscode.window.showInformationMessage("Hello, this is the maze maker!");
+      sbi = vscode.window.createStatusBarItem();
     }),
 
     vscode.commands.registerCommand('maze.solve', () => {
@@ -45,6 +49,13 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
   );
+}
+
+function updateStatusBarItem(used: number, total: number) {
+  if (sbi) {
+    sbi.text = "Maze " + used + "/" + total + " (used/total)";
+    sbi.show();
+  }
 }
 
 function getWebviewContent(context: vscode.ExtensionContext, panel: vscode.WebviewPanel): void {
