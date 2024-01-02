@@ -1,5 +1,31 @@
-export type Cursor = [number, number];
+class ChoicePoint {
+    constructor(public readonly cursors: Cursor[], public readonly index: number) {
+    }
+}
+export class Cursor {
+    constructor(public readonly row: number, public readonly col: number) {}
+
+    move(dir: Direction): Cursor {
+        switch (dir) {
+            case Direction.up:
+                return new Cursor(this.row - 1, this.col);
+            case Direction.down:
+                return new Cursor(this.row + 1, this.col);
+            case Direction.left:
+                return new Cursor(this.row, this.col-1);
+            case Direction.right:
+                return new Cursor(this.row, this.col+1);
+        }
+    }
+}
 export type CursorDirectionAndOpen = [Cursor, Direction, boolean];
+type CursorDirectionAndIndex = [Cursor, Direction, number];
+export class CursorAndOpen {
+    constructor(public readonly cursor: Cursor, public readonly open: boolean) {}
+}
+class CursorAndDirection {
+    constructor(public readonly cursor: Cursor, public readonly direction: Direction) {}
+}
 export enum Direction { up = "up", down = "down", left = "left", right = "right" };
 function getAllDirections(): [Direction, Direction, Direction, Direction] {
     return [Direction.up, Direction.down, Direction.left, Direction.right];
@@ -41,7 +67,6 @@ export class Maze {
     public* clear(): Generator<CursorDirectionAndOpen> {
         this.verticalWalls = [];
         this.horizontalWalls = [];
-        console.log("maze constructor");
         this.cells = [];
         for (var row = 0; row <= this.height; ++row) {
             this.verticalWalls[row] = [];
@@ -49,11 +74,11 @@ export class Maze {
             for (var col = 0; col <= this.width; ++col) {
                 if (row !== this.height) {
                     this.verticalWalls[row][col] = true;
-                    yield [[row, col], Direction.left, false];
+                    yield [new Cursor(row, col), Direction.left, false];
                 }
                 if (col !== this.width) {
                     this.horizontalWalls[row][col] = true;
-                    yield [[row, col], Direction.up, false];
+                    yield [new Cursor(row, col), Direction.up, false];
                 }
             }
         }
@@ -70,7 +95,7 @@ export class Maze {
 
         row = 0;
         col = Math.floor(Math.random() * this.width);
-        var cursor: Cursor = [row, col];
+        var cursor: Cursor = new Cursor(row, col);
         this.openWallInDirection(cursor, Direction.up);
         yield [cursor, Direction.up, true];
 
@@ -78,52 +103,95 @@ export class Maze {
         while (this.usedCells < totalCells) {
             const dir = this.chooseDirectionToUnusedCell(cursor);
             if (dir === null) {
-                this.advanceToUsed(cursor);
+                cursor = this.advanceToUsed(cursor);
             } else {
                 this.openWallInDirection(cursor, dir);
                 yield [cursor, dir, true];
-                this.moveCursorInDirection(cursor, dir);
+                cursor = cursor.move(dir);
             }
         }
 
         row = this.height;
         col = Math.floor(Math.random() * this.width);
-        var cursor: Cursor = [row, col];
+        var cursor: Cursor = new Cursor(row, col);
         this.openWallInDirection(cursor, Direction.up);
         yield [cursor, Direction.up, true];
     }
 
-    private moveCursorInDirection(cursor: Cursor, dir: Direction): void {
+    public* solve(): Generator<CursorAndOpen> {
+        let choicePoints: ChoicePoint[] = [];
+        let history: Cursor[] = [];
+
+        let cursor = this.findStartOfMaze();
+        yield new CursorAndOpen(cursor, false);
+        history.push(cursor);
+        this.cells[cursor.row][cursor.col] = true;
+
+        while(!this.atExit(cursor)) {
+            let moves: Cursor[] = this.findNextSolutionMoves(cursor);
+            if (moves.length === 0) {
+                if (choicePoints.length === 0) {
+                    return;
+                }
+                let cp = choicePoints[choicePoints.length-1];
+                let cu: Cursor | undefined = cp.cursors.shift();
+                if (cu === undefined) {
+                    return;
+                }
+                if (cp.cursors.length === 0) {
+                    choicePoints.pop();
+                }
+                let from = history.length;
+                let to = cp.index;
+                for(let i=from; i>to; --i) {
+                    let c = history.pop();
+                    if (c === undefined) {
+                        return;
+                    }
+                    yield new CursorAndOpen(c, true);
+                    this.cells[cursor.row][cursor.col] = false;
+                }
+                cursor = cu;
+            } else
+            if (moves.length !== 1) {
+                choicePoints.push(new ChoicePoint(moves.slice(1), history.length));
+                cursor = moves[0];
+            } else {
+                cursor = moves[0];
+            }
+            history.push(cursor);
+            yield new CursorAndOpen(cursor, false);
+            this.cells[cursor.row][cursor.col] = true;
+        }
+
+    }
+
+    private advanceToUsed(cursor: Cursor): Cursor {
+        do {
+            cursor = this.advanceOne(cursor);
+        } while(this.isUnused(cursor));
+        return cursor;
+    }
+
+    private advanceOne(cursor: Cursor): Cursor {
+        const c1 = cursor.move(Direction.right);
+        if (c1.col < this.width) {return c1;}
+        const c2 = new Cursor(c1.row+1, 0);
+        if (c2.row < this.height) { return c2; }
+        return new Cursor(0, 0);
+    }
+
+    private isWallOpenInDirection(cursor: Cursor, dir: Direction): boolean {
         switch (dir) {
             case Direction.up:
-                --cursor[0];
-                break;
+                return !this.horizontalWalls[cursor.row][cursor.col];
             case Direction.down:
-                ++cursor[0];
-                break;
+                return !this.horizontalWalls[cursor.row+1][cursor.col];
             case Direction.left:
-                --cursor[1];
-                break;
+                return !this.verticalWalls[cursor.row][cursor.col];
             case Direction.right:
-                ++cursor[1];
-                break;
-        }
-    }
-
-    private advanceToUsed(cursor: Cursor): void {
-        do {
-            this.advanceOne(cursor);
-        } while(this.isUnused(cursor));
-    }
-
-    private advanceOne(cursor: Cursor): void {
-        ++cursor[1];
-        if (cursor[1] >= this.width) {
-            cursor[1] = 0;
-            if (++cursor[0] >= this.height) {
-                cursor[0] = 0;
-            }
-        }
+                return !this.verticalWalls[cursor.row][cursor.col+1];
+        }    
     }
 
     private openWallInDirection(cursor: Cursor, dir: Direction): void {
@@ -132,25 +200,25 @@ export class Maze {
                 this.openWall(this.horizontalWalls, cursor);
                  break;
             case Direction.down:
-                this.openWall(this.horizontalWalls, [cursor[0] + 1, cursor[1]]);
+                this.openWall(this.horizontalWalls, new Cursor(cursor.row + 1, cursor.col));
                 break;
             case Direction.left:
                 this.openWall(this.verticalWalls, cursor);
                 break;
             case Direction.right:
-                this.openWall(this.verticalWalls, [cursor[0], cursor[1]+1]);
+                this.openWall(this.verticalWalls, new Cursor(cursor.row, cursor.col+1));
                 break;
         }
     }
 
-    private openWall(walls: boolean[][], [row, col]: Cursor): void {
-        walls[row][col] = false;
+    private openWall(walls: boolean[][], cursor: Cursor): void {
+        walls[cursor.row][cursor.col] = false;
         ++this.usedCells;
+        if (this.usedCells > this.totalCells)
+            {this.usedCells = this.totalCells;}
     }
 
     private chooseDirectionToUnusedCell(cursor: Cursor): Direction | null {
-        var row: number = cursor[0];
-        var col: number = cursor[1];
         const directions: Direction[] = shuffle(getAllDirections());
         for (var dir of directions) {
             if (this.isUnusedInDirection(cursor, dir)) { 
@@ -161,27 +229,16 @@ export class Maze {
     }
 
     private isUnusedInDirection(cursor: Cursor, dir: Direction): boolean {
-        switch (dir) {
-            case Direction.up:
-                return this.isUnused([cursor[0] - 1, cursor[1]]);
-                break;
-            case Direction.down:
-                return this.isUnused([cursor[0] + 1, cursor[1]]);
-                break;
-            case Direction.left:
-                return this.isUnused([cursor[0], cursor[1] - 1]);
-                break;
-            case Direction.right:
-                return this.isUnused([cursor[0], cursor[1] + 1]);
-                break;
-        }
+        return this.isUnused(cursor.move(dir));
     }
 
     private isUsed(cursor: Cursor): boolean {
         return !this.isUnused(cursor);
     }
 
-    private isUnused([row, col]: Cursor): boolean {
+    private isUnused(cursor: Cursor): boolean {
+        const row = cursor.row;
+        const col = cursor.col;
         if (row < 0 || row >= this.height) { return false; }
         if (col < 0 || col >= this.width) { return false; }
         return this.verticalWalls[row][col] && this.verticalWalls[row][col + 1] &&
@@ -207,5 +264,44 @@ export class Maze {
             }
         }
     }
-}
 
+    private findStartOfMaze(): Cursor {
+        let c: Cursor = new Cursor(0, 0);
+        for(;c.col < this.width && !this.isWallOpenInDirection(c, Direction.up); c = c.move(Direction.right)) {
+        }
+        return c;
+    }
+
+    atExit(cursor: Cursor): boolean {
+        const ath = cursor.row+1 === this.height;
+        const o = !this.horizontalWalls[cursor.row+1][cursor.col];
+        const r = ath && o;
+        return r;
+    }
+
+    /**
+     * Given a location, look for all adjacent cells where there is
+     * no wall to that cell, and the cell is not already used.
+     * @param cursor 
+     * @returns An array of possible next moves.
+     */
+    findNextSolutionMoves(cursor: Cursor): Cursor[] {
+        let moves: Cursor[] = [];
+        for(let dir of getAllDirections()) {
+            const nextCursor = cursor.move(dir);
+            if (this.inMaze(nextCursor) && this.isWallOpenInDirection(cursor, dir) && !this.cellIsUsed(nextCursor)) {
+                moves.push(nextCursor);
+            }
+        }
+        return moves;
+    }
+
+    inMaze(cursor: Cursor): boolean {
+        return 0 <= cursor.row && cursor.row < this.height &&
+            0 <= cursor.col && cursor.col < this.width;
+    }
+
+    cellIsUsed(cursor: Cursor): boolean {
+        return this.cells[cursor.row][cursor.col];
+    }
+}

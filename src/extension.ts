@@ -2,13 +2,13 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
-let sbi: vscode.StatusBarItem | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
   var panel: vscode.WebviewPanel | undefined;
   context.subscriptions.push(
     
     vscode.commands.registerCommand('maze.generate', () => {
+
       // Create and show a new webview
       panel = vscode.window.createWebviewPanel(
         'maze', // Identifies the type of the webview. Used internally
@@ -25,18 +25,21 @@ export function activate(context: vscode.ExtensionContext) {
         //redraw
         e = e;
       });
+      let sbi: vscode.StatusBarItem = vscode.window.createStatusBarItem();
       panel.webview.onDidReceiveMessage(message => {
         switch(message.command) {
           case "alert":
             vscode.window.showInformationMessage("Webview alert: ".concat(JSON.stringify(message)));  
             break;
           case "status":
-            updateStatusBarItem(message.used, message.total);
+            updateStatusBarItem(sbi, message.used, message.total);
         }
       });
       getWebviewContent(context, panel);
-      panel.onDidDispose(() => panel = undefined);
-      sbi = vscode.window.createStatusBarItem();
+      panel.onDidDispose(() => {
+        sbi.dispose();
+        panel = undefined;
+      });
     }),
 
     vscode.commands.registerCommand('maze.solve', () => {
@@ -51,7 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 }
 
-function updateStatusBarItem(used: number, total: number) {
+function updateStatusBarItem(sbi: vscode.StatusBarItem, used: number, total: number) {
   if (sbi) {
     sbi.text = "Maze " + used + "/" + total + " (used/total)";
     sbi.show();
