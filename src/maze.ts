@@ -56,6 +56,12 @@ export class Maze {
 
     totalCells: number;
 
+    private generationDone = false;
+
+    public get isGenerationDone() {
+        return this.generationDone;
+    }
+
     constructor(public width: number, public height: number) {
         this.clear();
         this.verticalWalls = [[]];
@@ -65,6 +71,7 @@ export class Maze {
     }
 
     public* clear(): Generator<CursorDirectionAndOpen> {
+        this.generationDone = false;
         this.verticalWalls = [];
         this.horizontalWalls = [];
         this.cells = [];
@@ -135,6 +142,7 @@ export class Maze {
         var cursor: Cursor = new Cursor(row, col);
         this.openWallInDirection(cursor, Direction.up);
         yield [cursor, Direction.up, true];
+        this.generationDone = true;
     }
 
     public* solve(): Generator<CursorAndOpen> {
@@ -169,6 +177,7 @@ export class Maze {
                     }
                     yield new CursorAndOpen(c, true);
                     this.cells[cursor.row][cursor.col] = false;
+                    console.log(`backing up ${cursor}`);
                 }
                 cursor = cu;
             } else
