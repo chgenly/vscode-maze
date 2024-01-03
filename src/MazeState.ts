@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import { Maze, CursorDirectionAndOpen, Direction, CursorAndOpen } from "./maze.js";
 
 export class MazeState {
-  private readonly drawWallDelay = 1;
-  private readonly drawCellDelay = 500;
+  private readonly drawWallDelay = 0;
+  private readonly drawCellDelay = 100;
   private sbi: vscode.StatusBarItem | null;
   private readonly maze: Maze = new Maze(15, 15);
 
@@ -28,6 +28,10 @@ export class MazeState {
       this.drawWall(cursor.row, cursor.col, dir, open);
       this.updateStatusBarItem(this.maze.usedCells, this.maze.totalCells);
       setTimeout(() => this.drawWallSlowly(it), this.drawWallDelay);
+    } else {
+      if (this.sbi) {
+        this.sbi.backgroundColor = new vscode.ThemeColor("statusBarItem.errorBackground");
+      }
     }
   }
 
