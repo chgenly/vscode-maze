@@ -3,7 +3,9 @@ import {Maze}  from './maze.js';
 
 console.log("maze.tests.ts");
 var m = new Maze(10, 10);
-m.generate();
+for(const x of m.generate()) {
+
+}
 m.print();
 
 // // You can import and use all API from the 'vscode' module

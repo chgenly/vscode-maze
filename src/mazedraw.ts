@@ -17,7 +17,7 @@ export class MazeDraw {
         this.ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    public drawWalls(cursor: Cursor, dir: Direction, open: boolean): void {
+    public drawWall(cursor: Cursor, dir: Direction, open: boolean): void {
         var x1, y1, w, h;
         const delta = open ? this.lineWidth : 0;
         switch(dir) {

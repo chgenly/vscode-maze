@@ -90,6 +90,25 @@ export class Maze {
         }
     }
 
+    public* allWalls(): Generator<CursorDirectionAndOpen> {
+        for(let row=0; row<=this.height; ++row) {
+            for(let col=0; col<this.width; ++col) {
+                yield [new Cursor(row, col), Direction.up, !this.horizontalWalls[row][col]];
+            }
+            for(let col=0; col<=this.width; ++col) {
+                yield [new Cursor(row, col), Direction.left, !this.verticalWalls[row][col]];
+            }
+        }
+    }
+
+    public* allCells(): Generator<CursorAndOpen> {
+        for(let row=0; row<this.height; ++row) {
+            for(let col=0; col<this.width; ++col) {
+                yield new CursorAndOpen(new Cursor(row, col), !this.cells[row][col]);
+            }
+        }
+    }
+
     public* generate(): Generator<CursorDirectionAndOpen> {
         var row: number, col: number;
 
