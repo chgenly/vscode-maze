@@ -6,13 +6,15 @@ export class MazeState {
   private readonly drawCellDelay = 100;
   private sbi: vscode.StatusBarItem | null;
   private readonly maze: Maze = new Maze(15, 15);
+  private readonly webView: vscode.Webview;
 
-  constructor(private readonly webView: vscode.Webview, private readonly mazeViewId: number) {
+  constructor(private readonly panel: vscode.WebviewPanel, private readonly mazeViewId: number) {
+    this.webView = panel.webview;
     this.sbi = vscode.window.createStatusBarItem();
     this.sbi.command = {
       title: "Solve the maze",
       command: "maze.solve",
-      arguments: [this]
+      arguments: [panel]
     } as vscode.Command;
     for (const d of this.maze.clear()) { }
     this.drawWallSlowly(this.maze.generate());

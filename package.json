@@ -39,7 +39,7 @@
       },
       {
         "command": "maze.solve",
-        "title": "Solve a maze",
+        "title": "Solve the maze",
         "category": "Maze"
       }
     ]

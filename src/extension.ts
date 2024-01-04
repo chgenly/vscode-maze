@@ -3,7 +3,9 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { MazeState } from './MazeState.js';
 
-let mazeViewCount =0;
+let mazeViewCount = 0;
+
+const panels: vscode.WebviewPanel[] = [];
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("activated");
@@ -22,7 +24,8 @@ export function activate(context: vscode.ExtensionContext) {
           //localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')]
         } // Webview options. No local resource access.
       );
-      const mazeState = new MazeState(panel.webview, mazeViewCount);
+      panels.push(panel);
+      const mazeState = new MazeState(panel, mazeViewCount);
       (panel as any)._mazeState = mazeState;
 
       panel.webview.onDidReceiveMessage(message => {
@@ -30,11 +33,25 @@ export function activate(context: vscode.ExtensionContext) {
       });
       getWebviewContent(context, panel);
       panel.onDidDispose(() => {
+        const ix = panels.findIndex(p => p === panel);
+        if (ix !== -1) {
+          panels.splice(ix, 1);
+        }
         mazeState.dispose();
       });
     }),
-    vscode.commands.registerCommand('maze.solve', (mazeState: MazeState) => {
-      mazeState.solve();
+    vscode.commands.registerCommand('maze.solve', (webviewPanel: vscode.WebviewPanel | null = null) => {
+      if (webviewPanel === null || !webviewPanel.hasOwnProperty("_mazeState")) {
+        for (let p of panels) {
+          if (p.active) {
+            webviewPanel = p;
+          }
+        }
+      }
+      const mazeState = (webviewPanel as any)?._mazeState;
+      if (mazeState) {
+        mazeState.solve();
+      }
     })
   );
 }
