@@ -1,14 +1,15 @@
 import * as vscode from "vscode";
-import { Maze, CursorDirectionAndOpen, Direction, CursorAndOpen } from "./maze.js";
+import { Maze, CursorDirectionAndOpen, Direction, CursorAndOpen, MazeDimesions } from "./maze.js";
 
 export class MazeState {
-  private readonly drawWallDelay = 0;
-  private readonly drawCellDelay = 100;
+  private drawWallDelay = 0;
+  private drawCellDelay = 100;
   private sbi: vscode.StatusBarItem | null;
-  private readonly maze: Maze = new Maze(15, 15);
+  private readonly maze: Maze = new Maze(5, 5);
   private readonly webView: vscode.Webview;
 
-  constructor(private readonly panel: vscode.WebviewPanel, private readonly mazeViewId: number) {
+  constructor(private readonly panel: vscode.WebviewPanel, private readonly mazeViewId: number, dimensions: MazeDimesions) {
+    this.maze = new Maze(dimensions.rows, dimensions.cols);
     this.webView = panel.webview;
     this.sbi = vscode.window.createStatusBarItem();
     this.sbi.command = {
@@ -72,13 +73,7 @@ export class MazeState {
       const cursor = cursorDirectionAndOpen[0];
       const dir = cursorDirectionAndOpen[1];
       const open = cursorDirectionAndOpen[2];
-      this.webView.postMessage({
-        command: "drawWall",
-        row: cursor.row,
-        col: cursor.col,
-        dir: dir,
-        open: open
-      });
+      this.drawWall(cursor.row, cursor.col, dir, open);
     }
   }
 
@@ -128,6 +123,11 @@ export class MazeState {
         break;
       case "getState":
         this.draw();
+        break;
+      case "setSpeed":
+        const speed = message.value;
+        this.drawWallDelay = 100-speed;
+        this.drawCellDelay = 100-speed;
         break;
     }
   }

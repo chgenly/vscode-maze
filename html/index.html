@@ -5,14 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maze</title>
     <script src="${maze_js}"></script>
+    <style>
+        .center-div {
+            margin-left: auto;
+            margin-right: auto;
+            width: 50%;
+        }
+    </style>
 </head>
 <body onload="go()">
   <h1>Maze</h1>
     <script>
         function go() {
-            mz.top(document.getElementById("canvas"));
+            mz.top(document.getElementById("canvas"), document.getElementById("speed"));
         }
     </script>
-    <canvas id="canvas" width="600" height="600"></canvas>
+            Slow <input type="range" min="0" max="100" value="50" class="slider" id="speed" class="center-div"> Fast<br>
+        <canvas id="canvas" width="600" height="600"></canvas>
 </body>
 </html>

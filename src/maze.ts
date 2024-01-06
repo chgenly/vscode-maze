@@ -2,6 +2,7 @@ class ChoicePoint {
     constructor(public readonly cursors: Cursor[], public readonly index: number) {
     }
 }
+export type MazeDimesions = {rows: number, cols: number};
 export class Cursor {
     constructor(public readonly row: number, public readonly col: number) {}
 

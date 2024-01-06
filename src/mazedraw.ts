@@ -53,6 +53,8 @@ export class MazeDraw {
     public drawCell(cursor: Cursor, open: boolean) {
         const insetStart = this.lineWidth + (open ? 0 : 2*this.lineWidth);
         const insetEnd = this.lineWidth + (open ? 0 : 4*this.lineWidth); 
+        console.log(`drawCell ${cursor.row} ${cursor.col} ${open}`);
+
         if (open) {
             this.ctx.fillStyle = this.backgroundColor;
             let y = cursor.row * this.cellHeight + insetStart;

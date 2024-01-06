@@ -3,8 +3,14 @@ import {MazeDraw} from "./mazedraw.js";
 
 let vscode = acquireVsCodeApi();
 
-export function top(canvas: HTMLCanvasElement) {
+export function top(canvas: HTMLCanvasElement, slider: HTMLInputElement) {
     let mazeDraw: MazeDraw;
+
+    slider.oninput = function() {
+        const speed = parseInt(slider.value);
+        vscode.postMessage({command: "setSpeed", value: speed});
+    };
+    slider.oninput(new Event(""));
     vscode.postMessage({command: "getDimensions"});
     window.addEventListener('message', event =>{
         let data = event.data;
@@ -17,10 +23,14 @@ export function top(canvas: HTMLCanvasElement) {
                 vscode.postMessage({command: "getState"});
                 break;
             case "drawWall":
-                mazeDraw.drawWall(new Cursor(data.row, data.col), data.dir, data.open);
+                if (mazeDraw) {
+                    mazeDraw.drawWall(new Cursor(data.row, data.col), data.dir, data.open);
+                }
                 break;
             case "drawCell":
-                mazeDraw.drawCell(new Cursor(data.row, data.col), data.open);
+                if (mazeDraw) {
+                    mazeDraw.drawCell(new Cursor(data.row, data.col), data.open);
+                }
                 break;
         }
     });
