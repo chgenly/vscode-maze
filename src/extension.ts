@@ -27,7 +27,6 @@ export function activate(context: vscode.ExtensionContext) {
             } // Webview options. No local resource access.
           );
           panels.push(panel);
-          console.log(`extension dimensions=${JSON.stringify(dimensions)}`)
           const mazeState = new MazeState(panel, mazeViewCount, dimensions);
           (panel as any)._mazeState = mazeState;
 

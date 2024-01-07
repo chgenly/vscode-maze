@@ -1,12 +1,15 @@
 import * as vscode from 'vscode';
 import { MazeDimesions } from './maze';
 
+/**
+ * @returns The dimesions given by the user.
+ */
 export function getDimensions(): Promise<MazeDimesions> {
     const promise = new Promise<MazeDimesions>((resolve, reject) => {
         const inputBox = vscode.window.createInputBox();
         inputBox.title = "Enter maze dimensions (row, col)";
         inputBox.placeholder = "10, 10";
-        inputBox.value = "10, 10";
+        inputBox.value = "40, 40";
         inputBox.onDidChangeValue(() => {
             validateInput(inputBox);
         });
@@ -18,7 +21,6 @@ export function getDimensions(): Promise<MazeDimesions> {
             const dimensions = validateInput(inputBox);
             if (dimensions) {
                 resolve(dimensions);
-                console.log(`accept input.value=${JSON.stringify(dimensions)}`);
                 inputBox.dispose();
             }
         });

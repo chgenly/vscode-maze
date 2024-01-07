@@ -1,4 +1,4 @@
-import {Maze, Direction, Cursor, CursorDirectionAndOpen} from './maze.js';
+import {Maze, Direction, Cursor, CursorAndOpen, CursorDirectionAndOpen} from './maze.js';
 
 export class MazeDraw {
     private ctx: CanvasRenderingContext2D;
@@ -17,7 +17,16 @@ export class MazeDraw {
         this.ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    public drawWall(cursor: Cursor, dir: Direction, open: boolean): void {
+    public drawWalls(cursorDirectionAndOpens: CursorDirectionAndOpen[]) {
+        for(const cdo of cursorDirectionAndOpens) {
+            this.drawWall(cdo);
+        }
+    }
+
+    public drawWall(cursorDirectionAndOpen: CursorDirectionAndOpen): void {
+        const cursor = cursorDirectionAndOpen.cursor;
+        const dir = cursorDirectionAndOpen.dir;
+        const open = cursorDirectionAndOpen.open;
         var x1, y1, w, h;
         const delta = open ? this.lineWidth : 0;
         switch(dir) {
@@ -50,10 +59,17 @@ export class MazeDraw {
         this.ctx.fillRect(x1, y1, w, h);
     }
 
-    public drawCell(cursor: Cursor, open: boolean) {
+    public drawCells(cursorsAndOpens: CursorAndOpen[]): void {
+        for(const co of cursorsAndOpens) {
+            this.drawCell(co);
+        }
+    }
+
+    public drawCell(cursorAndOpen: CursorAndOpen): void {
+        const cursor = cursorAndOpen.cursor;
+        const open = cursorAndOpen.open;
         const insetStart = this.lineWidth + (open ? 0 : 2*this.lineWidth);
         const insetEnd = this.lineWidth + (open ? 0 : 4*this.lineWidth); 
-        console.log(`drawCell ${cursor.row} ${cursor.col} ${open}`);
 
         if (open) {
             this.ctx.fillStyle = this.backgroundColor;

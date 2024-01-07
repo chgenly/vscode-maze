@@ -1,11 +1,11 @@
 import * as vscode from "vscode";
-import { Maze, CursorDirectionAndOpen, Direction, CursorAndOpen, MazeDimesions } from "./maze.js";
+import { Maze, Cursor, CursorDirectionAndOpen, Direction, CursorAndOpen, MazeDimesions } from "./maze.js";
 
 export class MazeState {
-  private drawWallDelay = 0;
+  private drawWallDelay = 100;
   private drawCellDelay = 100;
   private sbi: vscode.StatusBarItem | null;
-  private readonly maze: Maze = new Maze(5, 5);
+  private readonly maze: Maze = new Maze(1, 1);
   private readonly webView: vscode.Webview;
 
   constructor(private readonly panel: vscode.WebviewPanel, private readonly mazeViewId: number, dimensions: MazeDimesions) {
@@ -20,29 +20,12 @@ export class MazeState {
     for (const d of this.maze.clear()) { }
     this.drawWallSlowly(this.maze.generate());
   }
-  
-  drawWallSlowly(it: Generator<CursorDirectionAndOpen>): void {
-    const res = it.next();
-    if (!res.done) {
-      const v = res.value;
-      const cursor = v[0];
-      const dir = v[1];
-      const open = v[2];
-      this.drawWall(cursor.row, cursor.col, dir, open);
-      this.updateStatusBarItem(this.maze.usedCells, this.maze.totalCells);
-      setTimeout(() => this.drawWallSlowly(it), this.drawWallDelay);
-    } else {
-      if (this.sbi) {
-        this.sbi.backgroundColor = new vscode.ThemeColor("statusBarItem.errorBackground");
-      }
-    }
-  }
 
-  dispose(): void {
+    public dispose(): void {
     this.sbi?.dispose();
   }
 
-  solve(): void {
+  public solve(): void {
     if (!this.maze.isGenerationDone) {
       return;
     }
@@ -53,63 +36,82 @@ export class MazeState {
     this.drawCellSlowly(this.maze.solve());
   }
 
-  drawCellSlowly(it: Generator<CursorAndOpen>): void {
-    const res = it.next();
-    if (!res.done) {
-      const v = res.value;
-      const cursor = v.cursor;
-      this.drawCell(cursor.row, cursor.col, v.open);
-      setTimeout(() => this.drawCellSlowly(it), this.drawCellDelay);
-    }
-  }
-
-  draw(): void {
+  private draw(): void {
     this.drawWalls();
     this.drawCells();
   }
 
-  drawWalls(): void {
-    for (let cursorDirectionAndOpen of this.maze.allWalls()) {
-      const cursor = cursorDirectionAndOpen[0];
-      const dir = cursorDirectionAndOpen[1];
-      const open = cursorDirectionAndOpen[2];
-      this.drawWall(cursor.row, cursor.col, dir, open);
-    }
-  }
-
-  drawWall(row: number, col: number, dir: Direction, open: boolean) {
+  private drawWalls(): void {
     this.webView.postMessage({
-      command: "drawWall",
-      row: row,
-      col: col,
-      dir: dir,
-      open: open
+      command: "drawWalls",
+      walls: [...this.maze.allWalls()]
     });
   }
 
-  drawCells(): void {
-    for (let cursorAndOpen of this.maze.allCells()) {
-      const cursor = cursorAndOpen.cursor;
-      const open = cursorAndOpen.open;
-      this.drawCell(cursor.row, cursor.col, open);
+  private drawWall(cursorDirectionAndOpen: CursorDirectionAndOpen) {
+    this.webView.postMessage({
+      command: "drawWall",
+      cursorDirectionAndOpen: cursorDirectionAndOpen,
+    });
+  }
+
+  private drawWallSlowly(it: Generator<CursorDirectionAndOpen>): void {
+    const res = it.next();
+    if (this.drawWallDelay === 0) {
+      this.webView.postMessage({
+        command: "drawWalls",
+        walls: [...it]
+      });
+    }
+    if (!res.done) {
+      const cursorDirectionAndOpen = res.value;
+      this.drawWall(cursorDirectionAndOpen);
+      this.updateStatusBarItem(this.maze.usedCells, this.maze.totalCells);
+      setTimeout(() => this.drawWallSlowly(it), this.drawWallDelay);
+    } else {
+      if (this.sbi) {
+        this.sbi.backgroundColor = new vscode.ThemeColor("statusBarItem.errorBackground");
+      }
     }
   }
 
-  drawCell(row: number, col: number, open: boolean): void {
-      this.webView.postMessage({
-        command: "drawCell",
-        row: row,
-        col: col,
-        open: open
-      });
+  private drawCells(): void {
+    this.webView.postMessage({
+      command: "drawCells",
+      cellsAndOpens: [...this.maze.allCells()]
+    });
   }
 
-  updateStatusBarItem(used: number, total: number) {
+  private drawCell(cursorAndOpen: CursorAndOpen): void {
+    this.webView.postMessage({
+      command: "drawCell",
+      cursorAndOpen: cursorAndOpen
+    });
+  }
+
+  private drawCellSlowly(it: Generator<CursorAndOpen>): void {
+    const res = it.next();
+    if (this.drawCellDelay === 0) {
+      this.webView.postMessage({
+        command: "drawCells",
+        cellsAndOpens: [...it]
+      });
+    }
+
+    if (!res.done) {
+      const cursorAndOpen = res.value;
+      this.drawCell(cursorAndOpen);
+      setTimeout(() => this.drawCellSlowly(it), this.drawCellDelay);
+    }
+  }
+  
+  private updateStatusBarItem(used: number, total: number) {
     if (this.sbi) {
       this.sbi.text = "Maze " + this.mazeViewId + ":  " + used + "/" + total + " (used/total)";
       this.sbi.show();
     }
   }
+
   onDidReceiveMessage(message: any): void {
     switch (message.command) {
       case "alert":
@@ -126,8 +128,8 @@ export class MazeState {
         break;
       case "setSpeed":
         const speed = message.value;
-        this.drawWallDelay = 100-speed;
-        this.drawCellDelay = 100-speed;
+        this.drawWallDelay = 100 - speed;
+        this.drawCellDelay = 100 - speed;
         break;
     }
   }

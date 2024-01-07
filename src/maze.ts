@@ -19,7 +19,11 @@ export class Cursor {
         }
     }
 }
-export type CursorDirectionAndOpen = [Cursor, Direction, boolean];
+export class CursorDirectionAndOpen {
+    constructor(public readonly cursor: Cursor, public readonly dir: Direction, public readonly open: boolean) {
+
+    }
+};
 type CursorDirectionAndIndex = [Cursor, Direction, number];
 export class CursorAndOpen {
     constructor(public readonly cursor: Cursor, public readonly open: boolean) {}
@@ -82,11 +86,11 @@ export class Maze {
             for (var col = 0; col <= this.width; ++col) {
                 if (row !== this.height) {
                     this.verticalWalls[row][col] = true;
-                    yield [new Cursor(row, col), Direction.left, false];
+                    yield new CursorDirectionAndOpen(new Cursor(row, col), Direction.left, false);
                 }
                 if (col !== this.width) {
                     this.horizontalWalls[row][col] = true;
-                    yield [new Cursor(row, col), Direction.up, false];
+                    yield new CursorDirectionAndOpen(new Cursor(row, col), Direction.up, false);
                 }
             }
         }
@@ -101,10 +105,10 @@ export class Maze {
     public* allWalls(): Generator<CursorDirectionAndOpen> {
         for(let row=0; row<=this.height; ++row) {
             for(let col=0; col<this.width; ++col) {
-                yield [new Cursor(row, col), Direction.up, !this.horizontalWalls[row][col]];
+                yield new CursorDirectionAndOpen(new Cursor(row, col), Direction.up, !this.horizontalWalls[row][col]);
             }
             for(let col=0; col<=this.width; ++col) {
-                yield [new Cursor(row, col), Direction.left, !this.verticalWalls[row][col]];
+                yield new CursorDirectionAndOpen(new Cursor(row, col), Direction.left, !this.verticalWalls[row][col]);
             }
         }
     }
@@ -124,7 +128,7 @@ export class Maze {
         col = Math.floor(Math.random() * this.width);
         var cursor: Cursor = new Cursor(row, col);
         this.openWallInDirection(cursor, Direction.up);
-        yield [cursor, Direction.up, true];
+        yield new CursorDirectionAndOpen(cursor, Direction.up, true);
 
         const totalCells = this.width * this.height;
         while (this.usedCells < totalCells) {
@@ -133,7 +137,7 @@ export class Maze {
                 cursor = this.advanceToUsed(cursor);
             } else {
                 this.openWallInDirection(cursor, dir);
-                yield [cursor, dir, true];
+                yield new CursorDirectionAndOpen(cursor, dir, true);
                 cursor = cursor.move(dir);
             }
         }
@@ -142,7 +146,7 @@ export class Maze {
         col = Math.floor(Math.random() * this.width);
         var cursor: Cursor = new Cursor(row, col);
         this.openWallInDirection(cursor, Direction.up);
-        yield [cursor, Direction.up, true];
+        yield new CursorDirectionAndOpen(cursor, Direction.up, true);
         this.generationDone = true;
     }
 
@@ -177,8 +181,7 @@ export class Maze {
                         return;
                     }
                     yield new CursorAndOpen(c, true);
-                    this.cells[cursor.row][cursor.col] = false;
-                    console.log(`backing up ${cursor}`);
+                    this.cells[c.row][c.col] = false;
                 }
                 cursor = cu;
             } else
@@ -275,23 +278,22 @@ export class Maze {
     }
 
     public print(): void {
-        console.log("print");
-        var s: string;
+        var s: string = "\n";
         for (var row = 0; row <= this.height; ++row) {
-            s = "";
             for (var col = 0; col < this.width; ++col) {
-                s += this.horizontalWalls[row][col] ? "+--" : "+  ";
+                s += this.horizontalWalls[row][col] ? "+---" : "+   ";
             }
             s += "+";
-            console.log(s);
-            if (row !== this.height) {
-                s = "";
+            s += "\n";
+            if (row < this.height) {
                 for (var col = 0; col <= this.width; ++col) {
-                    s += this.verticalWalls[row][col] ? "|  " : "   ";
+                    s += this.verticalWalls[row][col] ? "|" : " ";
+                    s += (col < this.width) ? (this.cells[row][col] ? " * " : "   ") : "";
                 }
-                console.log(s);
+                s += "\n";
             }
         }
+        console.log(s);
     }
 
     private findStartOfMaze(): Cursor {
