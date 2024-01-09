@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,14 +14,26 @@
         }
     </style>
 </head>
+
 <body onload="go()">
-  <h1>Maze</h1>
+    <h1>Maze</h1>
     <script>
         function go() {
-            mz.top(document.getElementById("canvas"), document.getElementById("speed"));
+            mz.top(document.getElementById("canvas"), document.getElementById("speed"), document.getElementById("finishGeneration"),
+            document.getElementById("startSolution"),
+            document.getElementById("finishSolution"));
         }
     </script>
-            Slow <input type="range" min="0" max="100" value="50" class="slider" id="speed" class="center-div"> Fast<br>
-        <canvas id="canvas" width="600" height="600"></canvas>
+    <div style="display: flex;justify-content: space-between; width:600px">
+        <div>
+        Slow <input type="range" min="-3" max="-1" step=".1" value="-2" class="slider" id="speed" class="center-div"> Fast
+        </div>
+        <input type="button" id="finishGeneration" value="Finish Generation"/>
+        <input type="button" id="startSolution" value="Start Solution"/>
+        <input type="button" id="finishSolution" value="Finish Solution" />
+    </div>
+    <p>
+    <canvas id="canvas" width="600" height="600"></canvas>
 </body>
+
 </html>

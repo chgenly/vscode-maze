@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { MazeState } from './MazeState.js';
+import { MazeDriver } from './MazeDriver.js';
 import { getDimensions } from './getDimensions';
 
 let mazeViewCount = 0;
@@ -27,11 +27,11 @@ export function activate(context: vscode.ExtensionContext) {
             } // Webview options. No local resource access.
           );
           panels.push(panel);
-          const mazeState = new MazeState(panel, mazeViewCount, dimensions);
-          (panel as any)._mazeState = mazeState;
+          const mazeDriver = new MazeDriver(panel, mazeViewCount, dimensions);
+          (panel as any)._mazeDriver = mazeDriver;
 
           panel.webview.onDidReceiveMessage(message => {
-            mazeState.onDidReceiveMessage(message);
+            mazeDriver.onDidReceiveMessage(message);
           });
           getWebviewContent(context, panel);
           panel.onDidDispose(() => {
@@ -39,23 +39,23 @@ export function activate(context: vscode.ExtensionContext) {
             if (ix !== -1) {
               panels.splice(ix, 1);
             }
-            mazeState.dispose();
+            mazeDriver.dispose();
           });
         })
         .catch(() => {
         });
     }),
     vscode.commands.registerCommand('maze.solve', (webviewPanel: vscode.WebviewPanel | null = null) => {
-      if (webviewPanel === null || !webviewPanel.hasOwnProperty("_mazeState")) {
+      if (webviewPanel === null || !webviewPanel.hasOwnProperty("_mazeDriver")) {
         for (let p of panels) {
           if (p.active) {
             webviewPanel = p;
           }
         }
       }
-      const mazeState = (webviewPanel as any)?._mazeState;
-      if (mazeState) {
-        mazeState.solve();
+      const mazeDriver = (webviewPanel as any)?._mazeDriver;
+      if (mazeDriver) {
+        mazeDriver.solve();
       }
     })
   );

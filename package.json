@@ -29,10 +29,6 @@
     },
     "commands": [
       {
-        "command": "maze.helloWorld",
-        "title": "Hello World"
-      },
-      {
         "command": "maze.generate",
         "title": "Generate a maze",
         "category": "Maze"

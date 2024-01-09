@@ -3,14 +3,20 @@ import { MazeDraw } from "./mazedraw.js";
 
 let vscode = acquireVsCodeApi();
 
-export function top(canvas: HTMLCanvasElement, slider: HTMLInputElement) {
+export function top(canvas: HTMLCanvasElement, slider: HTMLInputElement, finishGenerationButton: HTMLInputElement,
+    startSolutionButton: HTMLInputElement,
+    finishSolutionButton: HTMLInputElement): void {
+
     let mazeDraw: MazeDraw;
 
     slider.oninput = function () {
         const speed = parseInt(slider.value);
-        vscode.postMessage({ command: "setSpeed", value: speed });
+        vscode.postMessage({ command: "setLogSpeed", value: speed });
     };
     slider.oninput(new Event(""));
+    finishGenerationButton.onclick = () => vscode.postMessage({ command: "finishGeneration" });
+    startSolutionButton.onclick = () => vscode.postMessage({ command: "startSolution" });
+    finishSolutionButton.onclick = () => vscode.postMessage({ command: "finishSolution" });
     vscode.postMessage({ command: "getDimensions" });
     window.addEventListener('message', event => {
         let message = event.data;
@@ -41,6 +47,15 @@ export function top(canvas: HTMLCanvasElement, slider: HTMLInputElement) {
                 if (mazeDraw) {
                     mazeDraw.drawCells(message.cellsAndOpens);
                 }
+                break;
+            case "setFinishGenerationEnable":
+                finishGenerationButton.disabled = !message.enable;
+                break;
+            case "setStartSolutionEnable":
+                startSolutionButton.disabled = !message.enable;
+                break;
+            case "setFinishSolutionEnable":
+                finishSolutionButton.disabled = !message.enable;
                 break;
         }
     });

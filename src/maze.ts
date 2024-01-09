@@ -1,3 +1,5 @@
+export enum MazeState {GENERATION_NOT_STARTED, GENERATION_IN_PROGRESS, GENERATION_DONE, SOLUTION_IN_PROGRESS, SOLUTION_DONE};
+
 class ChoicePoint {
     constructor(public readonly cursors: Cursor[], public readonly index: number) {
     }
@@ -61,10 +63,18 @@ export class Maze {
 
     totalCells: number;
 
-    private generationDone = false;
+    private _state: MazeState = MazeState.GENERATION_NOT_STARTED;;
+
+    get state(): MazeState {
+        return this._state;
+    }
 
     public get isGenerationDone() {
-        return this.generationDone;
+        return this._state >= MazeState.GENERATION_DONE;
+    }
+
+    public get isSolutionInProgress() {
+        return this._state === MazeState.SOLUTION_IN_PROGRESS;
     }
 
     constructor(public width: number, public height: number) {
@@ -76,7 +86,7 @@ export class Maze {
     }
 
     public* clear(): Generator<CursorDirectionAndOpen> {
-        this.generationDone = false;
+        this._state = MazeState.GENERATION_NOT_STARTED;
         this.verticalWalls = [];
         this.horizontalWalls = [];
         this.cells = [];
@@ -124,6 +134,8 @@ export class Maze {
     public* generate(): Generator<CursorDirectionAndOpen> {
         var row: number, col: number;
 
+        this._state = MazeState.GENERATION_IN_PROGRESS;
+
         row = 0;
         col = Math.floor(Math.random() * this.width);
         var cursor: Cursor = new Cursor(row, col);
@@ -147,10 +159,14 @@ export class Maze {
         var cursor: Cursor = new Cursor(row, col);
         this.openWallInDirection(cursor, Direction.up);
         yield new CursorDirectionAndOpen(cursor, Direction.up, true);
-        this.generationDone = true;
+        this._state = MazeState.GENERATION_DONE;
     }
 
     public* solve(): Generator<CursorAndOpen> {
+        if (this._state !== MazeState.GENERATION_DONE) {
+            return;
+        }
+        this._state = MazeState.SOLUTION_IN_PROGRESS;
         let choicePoints: ChoicePoint[] = [];
         let history: Cursor[] = [];
 
@@ -195,7 +211,7 @@ export class Maze {
             yield new CursorAndOpen(cursor, false);
             this.cells[cursor.row][cursor.col] = true;
         }
-
+        this._state = MazeState.SOLUTION_DONE;
     }
 
     private advanceToUsed(cursor: Cursor): Cursor {
