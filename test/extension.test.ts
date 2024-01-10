@@ -15,6 +15,6 @@ suite('Extension Test Suite', () => {
 	// 	})();
 	test('Sample test', () => {
 		// assert.strictEqual(-1, [1, 2, 3].indexOf(2));
-		// assert.strictEqual(-1, [1, 2, 3].indexOf(0));
+		 assert.strictEqual(-1, [1, 2, 3].indexOf(0));
 	});
 });

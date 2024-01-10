@@ -46,26 +46,28 @@ export class Maze {
      * There are height+1 rows and width+1 columns. top most row is 0
      * bottom most row is height. Left most column is 0, right most column is width.
      */
-    verticalWalls: boolean[][];
+    protected verticalWalls: boolean[][];
     /**
      * Horizontal walls [row][column].  True if a wall is present.
      * There are height+1 rows and width+1 columns. top most row is 0
      * bottom most row is height. Left most column is 0, right most column is width.
      */
-    horizontalWalls: boolean[][];
+    protected horizontalWalls: boolean[][];
     /**
      * Cells.  A cell is enclosed by four walls (present or not). There are height
      * rows, and width columns.
      */
-    cells: boolean[][];
+    protected cells: boolean[][];
 
-    usedCells: number = 0;
+    protected _usedCells: number = 0;
 
-    totalCells: number;
+    public get usedCells() {return this._usedCells;}
 
-    private _state: MazeState = MazeState.GENERATION_NOT_STARTED;;
+    readonly totalCells: number;
 
-    get state(): MazeState {
+    protected _state: MazeState = MazeState.GENERATION_NOT_STARTED;;
+
+    public get state(): MazeState {
         return this._state;
     }
 
@@ -78,11 +80,11 @@ export class Maze {
     }
 
     constructor(public width: number, public height: number) {
-        this.clear();
         this.verticalWalls = [[]];
         this.horizontalWalls = [[]];
         this.cells = [[]];
         this.totalCells = width*height;
+        for(const unused of this.clear()) {}
     }
 
     public* clear(): Generator<CursorDirectionAndOpen> {
@@ -143,7 +145,7 @@ export class Maze {
         yield new CursorDirectionAndOpen(cursor, Direction.up, true);
 
         const totalCells = this.width * this.height;
-        while (this.usedCells < totalCells) {
+        while (this._usedCells < totalCells) {
             const dir = this.chooseDirectionToUnusedCell(cursor);
             if (dir === null) {
                 cursor = this.advanceToUsed(cursor);
@@ -214,14 +216,14 @@ export class Maze {
         this._state = MazeState.SOLUTION_DONE;
     }
 
-    private advanceToUsed(cursor: Cursor): Cursor {
+    protected advanceToUsed(cursor: Cursor): Cursor {
         do {
             cursor = this.advanceOne(cursor);
         } while(this.isUnused(cursor));
         return cursor;
     }
 
-    private advanceOne(cursor: Cursor): Cursor {
+    protected advanceOne(cursor: Cursor): Cursor {
         const c1 = cursor.move(Direction.right);
         if (c1.col < this.width) {return c1;}
         const c2 = new Cursor(c1.row+1, 0);
@@ -229,7 +231,7 @@ export class Maze {
         return new Cursor(0, 0);
     }
 
-    private isWallOpenInDirection(cursor: Cursor, dir: Direction): boolean {
+    protected isWallOpenInDirection(cursor: Cursor, dir: Direction): boolean {
         switch (dir) {
             case Direction.up:
                 return !this.horizontalWalls[cursor.row][cursor.col];
@@ -242,7 +244,7 @@ export class Maze {
         }    
     }
 
-    private openWallInDirection(cursor: Cursor, dir: Direction): void {
+    protected openWallInDirection(cursor: Cursor, dir: Direction): void {
         switch (dir) {
             case Direction.up:
                 this.openWall(this.horizontalWalls, cursor);
@@ -259,14 +261,14 @@ export class Maze {
         }
     }
 
-    private openWall(walls: boolean[][], cursor: Cursor): void {
+    protected openWall(walls: boolean[][], cursor: Cursor): void {
         walls[cursor.row][cursor.col] = false;
-        ++this.usedCells;
-        if (this.usedCells > this.totalCells)
-            {this.usedCells = this.totalCells;}
+        ++this._usedCells;
+        if (this._usedCells > this.totalCells)
+            {this._usedCells = this.totalCells;}
     }
 
-    private chooseDirectionToUnusedCell(cursor: Cursor): Direction | null {
+    protected chooseDirectionToUnusedCell(cursor: Cursor): Direction | null {
         const directions: Direction[] = shuffle(getAllDirections());
         for (var dir of directions) {
             if (this.isUnusedInDirection(cursor, dir)) { 
@@ -276,15 +278,15 @@ export class Maze {
         return null;
     }
 
-    private isUnusedInDirection(cursor: Cursor, dir: Direction): boolean {
+    protected isUnusedInDirection(cursor: Cursor, dir: Direction): boolean {
         return this.isUnused(cursor.move(dir));
     }
 
-    private isUsed(cursor: Cursor): boolean {
+    protected isUsed(cursor: Cursor): boolean {
         return !this.isUnused(cursor);
     }
 
-    private isUnused(cursor: Cursor): boolean {
+    protected isUnused(cursor: Cursor): boolean {
         const row = cursor.row;
         const col = cursor.col;
         if (row < 0 || row >= this.height) { return false; }
@@ -312,14 +314,14 @@ export class Maze {
         console.log(s);
     }
 
-    private findStartOfMaze(): Cursor {
+    protected findStartOfMaze(): Cursor {
         let c: Cursor = new Cursor(0, 0);
         for(;c.col < this.width && !this.isWallOpenInDirection(c, Direction.up); c = c.move(Direction.right)) {
         }
         return c;
     }
 
-    atExit(cursor: Cursor): boolean {
+    protected atExit(cursor: Cursor): boolean {
         const ath = cursor.row+1 === this.height;
         const o = !this.horizontalWalls[cursor.row+1][cursor.col];
         const r = ath && o;
@@ -332,7 +334,7 @@ export class Maze {
      * @param cursor 
      * @returns An array of possible next moves.
      */
-    findNextSolutionMoves(cursor: Cursor): Cursor[] {
+    protected findNextSolutionMoves(cursor: Cursor): Cursor[] {
         let moves: Cursor[] = [];
         for(let dir of getAllDirections()) {
             const nextCursor = cursor.move(dir);
@@ -343,12 +345,13 @@ export class Maze {
         return moves;
     }
 
-    inMaze(cursor: Cursor): boolean {
+    protected inMaze(cursor: Cursor): boolean {
+        
         return 0 <= cursor.row && cursor.row < this.height &&
             0 <= cursor.col && cursor.col < this.width;
     }
 
-    cellIsUsed(cursor: Cursor): boolean {
+    protected cellIsUsed(cursor: Cursor): boolean {
         return this.cells[cursor.row][cursor.col];
     }
 }
