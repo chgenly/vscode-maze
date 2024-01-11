@@ -34,7 +34,7 @@ class CursorAndDirection {
     constructor(public readonly cursor: Cursor, public readonly direction: Direction) {}
 }
 export enum Direction { up = "up", down = "down", left = "left", right = "right" };
-function getAllDirections(): [Direction, Direction, Direction, Direction] {
+export function getAllDirections(): [Direction, Direction, Direction, Direction] {
     return [Direction.up, Direction.down, Direction.left, Direction.right];
 }
 function shuffle<T>(array: T[]): T[] {
