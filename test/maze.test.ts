@@ -24,6 +24,13 @@ class TestMaze extends Maze {
     public isUsed(cursor: Cursor): boolean {
         return super.isUsed(cursor);
     }
+    public findNextSolutionMoves(cursor: Cursor): Cursor[] {
+        return super.findNextSolutionMoves(cursor);
+    }
+    public markCellUsed(cursor: Cursor) {
+        super.markCellUsed(cursor);
+    }
+
 }
 
 suite('Maze.ts Test Suite', () => {
@@ -114,6 +121,9 @@ suite('Maze.ts Test Suite', () => {
     test('generation', () => {
         testGeneration();
     });
+    test('connectivity', () => {
+        testConnectivity();
+    });
     test('solution', () => {
         testSolution();
     });
@@ -139,5 +149,37 @@ function testGeneration(): void {
     assert.strictEqual(maze.state, MazeState.GENERATION_DONE);
     maze.print();
 }
+
+class Path {
+    constructor(public readonly cursor: Cursor, public readonly path: Path | null) {}
+}
+/** Maze must be fully connected and acyclic. */
+function testConnectivity(): void {
+    const zz = new Cursor(0, 0);
+    let paths: Path[] = [new Path(new Cursor(0,0), null)];
+    const rows = 10;
+    const cols = rows;
+    const maze = new TestMaze(rows, cols);
+    for(const x of maze.generate()) {}
+    maze.print();
+    maze.markCellUsed(zz);
+    let used = 1;
+
+    while(paths.length !== 0) {
+        assert.ok(used <= maze.totalCells, `Too many cells: ${used}`);
+        const path: Path|undefined = paths.pop();
+        if (!path) {
+            assert.ok(false, "can't happen");
+            return;
+        }
+        maze.findNextSolutionMoves(path.cursor).forEach(c => {
+            ++used;
+            maze.markCellUsed(c);
+            paths.push(new Path(c, path));
+        });
+    }
+    assert.strictEqual(used, maze.totalCells,"Incorrent number of used cells.");
+}
+
 function testSolution(): void {
 }

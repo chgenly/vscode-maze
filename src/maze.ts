@@ -109,11 +109,10 @@ export class Maze {
         for (var row = 0; row < this.height; ++row) {
             this.cells[row] = [];
             for (var col = 0; col < this.width; ++col) {
-                this.cells[row][col] = false;
+                this.markCellUnused(new Cursor(row, col));
             }
         }
     }
-
     public* allWalls(): Generator<CursorDirectionAndOpen> {
         for(let row=0; row<=this.height; ++row) {
             for(let col=0; col<this.width; ++col) {
@@ -175,7 +174,7 @@ export class Maze {
         let cursor = this.findStartOfMaze();
         yield new CursorAndOpen(cursor, false);
         history.push(cursor);
-        this.cells[cursor.row][cursor.col] = true;
+        this.markCellUsed(cursor);
 
         while(!this.atExit(cursor)) {
             let moves: Cursor[] = this.findNextSolutionMoves(cursor);
@@ -199,7 +198,7 @@ export class Maze {
                         return;
                     }
                     yield new CursorAndOpen(c, true);
-                    this.cells[c.row][c.col] = false;
+                    this.markCellUnused(c);
                 }
                 cursor = cu;
             } else
@@ -211,7 +210,7 @@ export class Maze {
             }
             history.push(cursor);
             yield new CursorAndOpen(cursor, false);
-            this.cells[cursor.row][cursor.col] = true;
+            this.markCellUsed(cursor);
         }
         this._state = MazeState.SOLUTION_DONE;
     }
@@ -350,6 +349,15 @@ export class Maze {
         return 0 <= cursor.row && cursor.row < this.height &&
             0 <= cursor.col && cursor.col < this.width;
     }
+
+    protected markCellUsed(cursor: Cursor) {
+        this.cells[cursor.row][cursor.col] = true;
+    }
+
+    protected markCellUnused(cursor: Cursor) {
+        this.cells[cursor.row][cursor.col] = false;
+    }
+
 
     protected cellIsUsed(cursor: Cursor): boolean {
         return this.cells[cursor.row][cursor.col];
