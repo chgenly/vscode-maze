@@ -39,6 +39,14 @@ class TestMaze extends Maze {
     public isCellUsed(cursor: Cursor): boolean {
         return super.isCellUsed(cursor);
     }
+    public countOpenings(entrance: boolean): number {
+        const row = entrance ? 0 : this.height;
+        return new Array(this.width).fill(0)
+            .reduce((acc, _1, col, _2) =>
+                (acc + this.isWallOpenInDirection(new Cursor(row, col), Direction.up) ? 1 : 0)
+                ,
+                0);
+    }
 }
 
 suite('Maze.ts Test Suite', () => {
@@ -142,20 +150,21 @@ function testGeneration(): void {
     var height = 10;
     var maze = new Maze(width, height);
     assert.strictEqual(maze.state, MazeState.GENERATION_NOT_STARTED);
-    let used = 0;
+    let openedWallCount = 0;
     for (const cdo of maze.generate()) {
-        ++used;
-        assert.strictEqual(width * height, maze.totalCells);
+        ++openedWallCount;
+        assert.strictEqual(width * height, maze.totalCells, `Wrong number of total cells ${maze.totalCells}\n${maze}`);
         assert.strictEqual(maze.state, MazeState.GENERATION_IN_PROGRESS);
-        if (maze.totalCells + 1 === used) {
-            assert.strictEqual(maze.usedCells, maze.usedCells);
+        if (maze.totalCells + 1 === openedWallCount) {
+            // This is allowed because in a complete maze we will open one more wall, than there are cells.
         } else {
-            assert.strictEqual(used, maze.usedCells);
+            assert.strictEqual(maze.usedCells, openedWallCount, `Wrong number of used cells\n${maze}`);
         }
     }
     assert.strictEqual(maze.state, MazeState.GENERATION_DONE);
 }
 
+/** A path is a cons style list of cursor. */
 class Path {
     constructor(public readonly cursor: Cursor, public readonly previousPath: Path | null) { }
 }
@@ -167,42 +176,36 @@ function testConnectivity(): void {
     const cols = rows;
     const maze = new TestMaze(rows, cols);
     for (const x of maze.generate()) { }
-    maze.print();
     maze.markCellUsed(zz);
     let used = 1;
 
     while (paths.length !== 0) {
-        assert.ok(used <= maze.totalCells, `Too many cells: ${used}`);
+        assert.ok(used <= maze.totalCells, `Too many cells: ${used}\n${maze}`);
         const path: Path | undefined = paths.pop();
         if (!path) {
             assert.ok(false, "can't happen");
             return;
         }
-        let cs: Cursor[] = [];
+        let nextCursors: Cursor[] = [];
         let cursor = path.cursor;
-        for (let dir of getAllDirections()) { cs.push(cursor.move(dir)); }
-        // console.log(`pristine cs=${JSON.stringify(cs)}`);
-        cs = cs
+        for (let dir of getAllDirections()) { nextCursors.push(cursor.move(dir)); }
+        nextCursors = nextCursors
             .filter(c => maze.inMaze(c))
-            .filter(c => {
-                const b = !maze.isWallBetween(cursor, c);
-                !maze.isWallBetween(cursor, c);
-                return b;
-            });
-        // console.log(`filtered1 cs=${JSON.stringify(cs)}`);
-        const prevC = path?.previousPath?.cursor;
-        if (prevC) {
-            cs = cs.filter(c => !c.eq(prevC));
+            .filter(c => !maze.isWallBetween(cursor, c));
+        const prevCursor = path?.previousPath?.cursor;
+        if (prevCursor) {
+            nextCursors = nextCursors.filter(c => !c.eq(prevCursor));
         }
-        // console.log(`final cs=${JSON.stringify(cs)}`);
-        cs.forEach(c => {
-            assert.ok(!maze.isCellUsed(c), `Loop encountered at ${JSON.stringify(c)}`);
+        nextCursors.forEach(c => {
+            assert.ok(!maze.isCellUsed(c), `Loop encountered at ${JSON.stringify(c)}\n${maze}`);
             ++used;
             maze.markCellUsed(c);
             paths.push(new Path(c, path));
         });
     }
-    assert.strictEqual(used, maze.totalCells, `Incorrent number of used cells: ${used}`);
+    assert.strictEqual(used, maze.totalCells, `Incorrent number of used cells: ${used}\n${maze}`);
+    assert.strictEqual(maze.countOpenings(true), 1, `Incorrect number of entrances\n${maze}`);
+    assert.strictEqual(maze.countOpenings(false), 1, `Incorrect number of exits\n${maze}`);
 }
 
 function testSolution(): void {
