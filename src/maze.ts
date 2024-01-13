@@ -1,4 +1,5 @@
 export enum MazeState {GENERATION_NOT_STARTED, GENERATION_IN_PROGRESS, GENERATION_DONE, SOLUTION_IN_PROGRESS, SOLUTION_DONE};
+import * as assert from 'assert';
 
 class ChoicePoint {
     constructor(public readonly cursors: Cursor[], public readonly index: number) {
@@ -7,8 +8,10 @@ class ChoicePoint {
 export type MazeDimesions = {rows: number, cols: number};
 export class Cursor {
     constructor(public readonly row: number, public readonly col: number) {}
-
-    move(dir: Direction): Cursor {
+    public eq(c2: Cursor): boolean {
+        return this.row === c2.row && this.col === c2.col;
+    }
+    public move(dir: Direction): Cursor {
         switch (dir) {
             case Direction.up:
                 return new Cursor(this.row - 1, this.col);
@@ -218,7 +221,7 @@ export class Maze {
     protected advanceToUsed(cursor: Cursor): Cursor {
         do {
             cursor = this.advanceOne(cursor);
-        } while(this.isUnused(cursor));
+        } while(this.isAllClosedWalls(cursor));
         return cursor;
     }
 
@@ -278,23 +281,22 @@ export class Maze {
     }
 
     protected isUnusedInDirection(cursor: Cursor, dir: Direction): boolean {
-        return this.isUnused(cursor.move(dir));
+        return this.isAllClosedWalls(cursor.move(dir));
     }
 
-    protected isUsed(cursor: Cursor): boolean {
-        return !this.isUnused(cursor);
+    protected isAnyWallOpen(cursor: Cursor): boolean {
+        return !this.isAllClosedWalls(cursor);
     }
 
-    protected isUnused(cursor: Cursor): boolean {
+    protected isAllClosedWalls(cursor: Cursor): boolean {
         const row = cursor.row;
         const col = cursor.col;
-        if (row < 0 || row >= this.height) { return false; }
-        if (col < 0 || col >= this.width) { return false; }
+        if (!this.inMaze(cursor)) { return false; }
         return this.verticalWalls[row][col] && this.verticalWalls[row][col + 1] &&
             this.horizontalWalls[row][col] && this.horizontalWalls[row+1][col];
     }
 
-    public print(): void {
+    public toString(): string {
         var s: string = "\n";
         for (var row = 0; row <= this.height; ++row) {
             for (var col = 0; col < this.width; ++col) {
@@ -310,7 +312,11 @@ export class Maze {
                 s += "\n";
             }
         }
-        console.log(s);
+        return s;
+    }
+
+    public print(): void {
+        console.log(this.toString());
     }
 
     protected findStartOfMaze(): Cursor {
@@ -337,11 +343,24 @@ export class Maze {
         let moves: Cursor[] = [];
         for(let dir of getAllDirections()) {
             const nextCursor = cursor.move(dir);
-            if (this.inMaze(nextCursor) && this.isWallOpenInDirection(cursor, dir) && !this.cellIsUsed(nextCursor)) {
+            if (this.inMaze(nextCursor) && this.isWallOpenInDirection(cursor, dir) && !this.isCellUsed(nextCursor)) {
                 moves.push(nextCursor);
             }
         }
         return moves;
+    }
+
+    protected isWallBetween(c1: Cursor, c2: Cursor): boolean {
+        const rowDelta = c2.row - c1.row;
+        const colDelta = c2.col - c1.col;
+        assert.ok(
+            Math.abs(rowDelta) === 0 && Math.abs(colDelta) === 1 ||
+            Math.abs(rowDelta) === 1 && Math.abs(colDelta) === 0);
+        if (rowDelta === 0) {
+            return !this.isWallOpenInDirection(c1, colDelta === 1 ? Direction.right : Direction.left);
+        } else {
+            return !this.isWallOpenInDirection(c1, rowDelta === 1 ? Direction.down : Direction.up);
+        }
     }
 
     protected inMaze(cursor: Cursor): boolean {
@@ -358,8 +377,7 @@ export class Maze {
         this.cells[cursor.row][cursor.col] = false;
     }
 
-
-    protected cellIsUsed(cursor: Cursor): boolean {
+    protected isCellUsed(cursor: Cursor): boolean {
         return this.cells[cursor.row][cursor.col];
     }
 }
