@@ -7,7 +7,7 @@ const assert = require.resolve('assert');
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
 
-const mazeConfig = {
+const topConfig = {
   target: 'webworker', // VS Code extensions run in a Node.js-context 📖 -> https://webpack.js.org/configuration/node/
 	mode: 'development', // this leaves the source code as close as possible to the original (when packaging we set this to 'production')
 
@@ -26,7 +26,7 @@ const mazeConfig = {
     // modules added here also need to be added in the .vscodeignore file
   },
   resolve: {
-    fallback: { assert: false},
+    fallback: { assert: assert},
     extensions: [".ts", ".tsx", ".js"],
     // Add support for TypeScripts fully qualified ESM imports.
     extensionAlias: {
@@ -73,7 +73,6 @@ const extensionConfig = {
     // modules added here also need to be added in the .vscodeignore file
   },
   resolve: {
-    fallback: { assert: assert},
     // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
     extensions: ['.ts', '.tsx', '.js'],
     extensionAlias: {
@@ -102,4 +101,4 @@ const extensionConfig = {
 };
 
 // module.exports = [ extensionConfig, mazeConfig];
-module.exports = [ mazeConfig, extensionConfig];
+module.exports = [ topConfig, extensionConfig];

@@ -67,6 +67,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@types/vscode-webview": "^1.57.4"
+    "@types/vscode-webview": "^1.57.4",
+    "assert": "^2.1.0"
   }
 }
