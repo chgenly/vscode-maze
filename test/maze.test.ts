@@ -106,7 +106,6 @@ suite('Maze.ts Test Suite', () => {
             }
             m.openWallInDirection(new Cursor(0, 2), dir);
             for (let col = 0; col < m.width; ++col) {
-                console.log(`cols.indexOf(col)=${cols.indexOf(col)} cols=${cols}`);
                 assert.strictEqual(m.isAnyWallOpen(new Cursor(0, col)), cols.indexOf(col) !== -1, `isUsed dir=${dir} col=${col}`);
                 assert.strictEqual(m.isAllClosedWalls(new Cursor(0, col)), cols.indexOf(col) === -1, `isUnused dir=${dir} col=${col}`);
             }
@@ -155,7 +154,6 @@ function testGeneration(): void {
         }
     }
     assert.strictEqual(maze.state, MazeState.GENERATION_DONE);
-    maze.print();
 }
 
 class Path {
@@ -185,12 +183,9 @@ function testConnectivity(): void {
         for (let dir of getAllDirections()) { cs.push(cursor.move(dir)); }
         // console.log(`pristine cs=${JSON.stringify(cs)}`);
         cs = cs
-            .filter(c => maze.inMaze(c));
-        // console.log(`filtered0 cs=${JSON.stringify(cs)}`);
-        cs = cs
+            .filter(c => maze.inMaze(c))
             .filter(c => {
                 const b = !maze.isWallBetween(cursor, c);
-                // console.log(`b=${b} c=${JSON.stringify(c)}`);
                 !maze.isWallBetween(cursor, c);
                 return b;
             });

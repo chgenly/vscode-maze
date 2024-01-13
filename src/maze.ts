@@ -135,16 +135,21 @@ export class Maze {
         }
     }
 
+    private openWallAtRandomColumn(row: number, dir: Direction): CursorDirectionAndOpen {
+        const col = Math.floor(Math.random() * this.width);
+        var cursor: Cursor = new Cursor(row, col);
+        this.openWallInDirection(cursor, dir);
+        return new CursorDirectionAndOpen(cursor, Direction.up, true);
+    }
+
     public* generate(): Generator<CursorDirectionAndOpen> {
         var row: number, col: number;
 
         this._state = MazeState.GENERATION_IN_PROGRESS;
 
-        row = 0;
-        col = Math.floor(Math.random() * this.width);
-        var cursor: Cursor = new Cursor(row, col);
-        this.openWallInDirection(cursor, Direction.up);
-        yield new CursorDirectionAndOpen(cursor, Direction.up, true);
+        const cdoEntrance = this.openWallAtRandomColumn(0, Direction.up );
+        yield cdoEntrance;
+        var cursor = cdoEntrance.cursor;
 
         const totalCells = this.width * this.height;
         while (this._usedCells < totalCells) {
@@ -158,11 +163,9 @@ export class Maze {
             }
         }
 
-        row = this.height;
-        col = Math.floor(Math.random() * this.width);
-        var cursor: Cursor = new Cursor(row, col);
-        this.openWallInDirection(cursor, Direction.up);
-        yield new CursorDirectionAndOpen(cursor, Direction.up, true);
+        const cdoExit = this.openWallAtRandomColumn(this.height, Direction.up);
+        yield cdoExit;
+        cursor = cdoExit.cursor;
         this._state = MazeState.GENERATION_DONE;
     }
 
@@ -296,6 +299,19 @@ export class Maze {
             this.horizontalWalls[row][col] && this.horizontalWalls[row+1][col];
     }
 
+    protected isWallBetween(c1: Cursor, c2: Cursor): boolean {
+        const rowDelta = c2.row - c1.row;
+        const colDelta = c2.col - c1.col;
+        assert.ok(
+            Math.abs(rowDelta) === 0 && Math.abs(colDelta) === 1 ||
+            Math.abs(rowDelta) === 1 && Math.abs(colDelta) === 0);
+        if (rowDelta === 0) {
+            return !this.isWallOpenInDirection(c1, colDelta === 1 ? Direction.right : Direction.left);
+        } else {
+            return !this.isWallOpenInDirection(c1, rowDelta === 1 ? Direction.down : Direction.up);
+        }
+    }
+
     public toString(): string {
         var s: string = "\n";
         for (var row = 0; row <= this.height; ++row) {
@@ -327,10 +343,10 @@ export class Maze {
     }
 
     protected atExit(cursor: Cursor): boolean {
-        const ath = cursor.row+1 === this.height;
-        const o = !this.horizontalWalls[cursor.row+1][cursor.col];
-        const r = ath && o;
-        return r;
+        if (cursor.row+1 !== this.height) {
+            return false;
+        }
+        return this.isWallOpenInDirection(cursor, Direction.down);
     }
 
     /**
@@ -350,21 +366,7 @@ export class Maze {
         return moves;
     }
 
-    protected isWallBetween(c1: Cursor, c2: Cursor): boolean {
-        const rowDelta = c2.row - c1.row;
-        const colDelta = c2.col - c1.col;
-        assert.ok(
-            Math.abs(rowDelta) === 0 && Math.abs(colDelta) === 1 ||
-            Math.abs(rowDelta) === 1 && Math.abs(colDelta) === 0);
-        if (rowDelta === 0) {
-            return !this.isWallOpenInDirection(c1, colDelta === 1 ? Direction.right : Direction.left);
-        } else {
-            return !this.isWallOpenInDirection(c1, rowDelta === 1 ? Direction.down : Direction.up);
-        }
-    }
-
     protected inMaze(cursor: Cursor): boolean {
-        
         return 0 <= cursor.row && cursor.row < this.height &&
             0 <= cursor.col && cursor.col < this.width;
     }
