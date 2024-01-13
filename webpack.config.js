@@ -3,7 +3,7 @@
 
 const path = require('path');
 const assert = require.resolve('assert');
-
+const webpack = require('webpack');
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
 
@@ -48,6 +48,11 @@ const topConfig = {
       }
     ]
   },
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env.NODE_DEBUG': null,
+    }),
+  ],
   devtool: 'nosources-source-map',
   infrastructureLogging: {
     level: "log", // enables logging required for problem matchers
