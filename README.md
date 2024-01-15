@@ -10,5 +10,8 @@ and
 
 >  maze: solve
 
-The extension contains the maze generation and solution routines. The web view handles drawing the maze.  The division is somewhat
-arbitrary, it was divided this way to let me use postMessage.
+The extension contains the maze generation and solution routines. The web view handles drawing the maze. 
+
+Source code repository: [https://github.com/chgenly/vscode-maze](https://github.com/chgenly/vscode-maze)
+
+License: MIT
