@@ -47,6 +47,19 @@ class TestMaze extends Maze {
                 ,
                 0);
     }
+    public findEndOfMaze(): Cursor {
+        let c: Cursor = new Cursor(this.height-1, 0);
+        for (; c.col < this.width && !this.isWallOpenInDirection(c, Direction.down); c = c.move(Direction.right)) {
+        }
+        return c;
+    }
+    public markAllCellsUnused(): void {
+        for (let row = 0; row < this.height; ++row) {
+            for (let col = 0; col < this.width; ++col) {
+                this.markCellUnused(new Cursor(row, col));
+            }
+        }
+    }
 }
 
 suite('Maze.ts Test Suite', () => {
@@ -170,21 +183,57 @@ class Path {
 }
 /** Maze must be fully connected and acyclic. */
 function testConnectivity(): void {
-    const zz = new Cursor(0, 0);
-    let paths: Path[] = [new Path(new Cursor(0, 0), null)];
     const rows = 10;
     const cols = rows;
     const maze = new TestMaze(rows, cols);
     for (const x of maze.generate()) { }
-    maze.markCellUsed(zz);
+    const zz = new Cursor(0, 0);
+
+    const [used, _] = findAllPaths(maze, zz);
+
+    assert.strictEqual(used, maze.totalCells, `Incorrent number of used cells: ${used}\n${maze}`);
+    assert.strictEqual(maze.countOpenings(true), 1, `Incorrect number of entrances\n${maze}`);
+    assert.strictEqual(maze.countOpenings(false), 1, `Incorrect number of exits\n${maze}`);
+}
+
+function testSolution(): void {
+    const rows = 10;
+    const cols = rows;
+    const maze = new TestMaze(rows, cols);
+    for (const x of maze.generate()) { }
+    const startCursor = maze.findStartOfMaze();
+    const endCursor = maze.findEndOfMaze();
+
+    const [used, solution] = findAllPaths(maze, startCursor, endCursor);
+    maze.markAllCellsUnused();
+    let s: Path | null = null;
+    for (const cao of maze.solve()) {
+        const cursor = cao.cursor;
+        const open = cao.open;
+        if (open) {
+            if (s === null) {
+                assert.ok(false, "Null path can't happen.");
+            } else {
+                s = s.previousPath;
+            }
+        } else {
+            s = new Path(cursor, s);
+        }
+    }
+    assert.deepStrictEqual(s, solution, `Incorrect solution path.\n${maze}`);
+}
+
+function findAllPaths(maze: TestMaze, startCursor: Cursor, endCursor?: Cursor): [number, Path | null] {
+    let paths: Path[] = [new Path(startCursor, null)];
+    maze.markCellUsed(startCursor);
     let used = 1;
+    let solution: Path | null = null;
 
     while (paths.length !== 0) {
         assert.ok(used <= maze.totalCells, `Too many cells: ${used}\n${maze}`);
         const path: Path | undefined = paths.pop();
         if (!path) {
             assert.ok(false, "can't happen");
-            return;
         }
         let nextCursors: Cursor[] = [];
         let cursor = path.cursor;
@@ -199,14 +248,12 @@ function testConnectivity(): void {
         nextCursors.forEach(c => {
             assert.ok(!maze.isCellUsed(c), `Loop encountered at ${JSON.stringify(c)}\n${maze}`);
             ++used;
+            const newPath = new Path(c, path);
             maze.markCellUsed(c);
-            paths.push(new Path(c, path));
+            paths.push(newPath);
+            if (endCursor && c.eq(endCursor)) { solution = newPath; }
         });
     }
-    assert.strictEqual(used, maze.totalCells, `Incorrent number of used cells: ${used}\n${maze}`);
-    assert.strictEqual(maze.countOpenings(true), 1, `Incorrect number of entrances\n${maze}`);
-    assert.strictEqual(maze.countOpenings(false), 1, `Incorrect number of exits\n${maze}`);
+    return [used, solution];
 }
 
-function testSolution(): void {
-}
