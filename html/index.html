@@ -19,21 +19,32 @@
     <h1>Maze</h1>
     <script>
         function go() {
-            mz.top(document.getElementById("canvas"), document.getElementById("speed"), document.getElementById("finishGeneration"),
-            document.getElementById("startSolution"),
-            document.getElementById("finishSolution"));
+            mz.top(document.getElementById("canvas"), document.getElementById("speedSlider"), document.getElementById("sizeSlider"), document.getElementById("finishGeneration"),
+                document.getElementById("startSolution"),
+                document.getElementById("finishSolution"));
         }
     </script>
-    <div style="display: flex;justify-content: space-between; width:600px">
-        <div>
-        Slow <input type="range" min="-3" max="-1" step=".1" value="-2" class="slider" id="speed" class="center-div"> Fast
-        </div>
-        <input type="button" id="finishGeneration" value="Finish Generation"/>
-        <input type="button" id="startSolution" value="Start Solution"/>
+    <div style="display: flex;justify-content: space-between;">
+        <fieldset>
+            <legend>Draw Speed</legend>
+            <div style="white-space: nowrap;">
+                Slow <input type="range" min="-3" max="-1" step=".1" value="-2" class="slider" id="speedSlider"
+                    class="center-div"> Fast
+            </div>
+        </fieldset>
+        <input type="button" id="finishGeneration" value="Finish Generation" />
+        <input type="button" id="startSolution" value="Start Solution" />
         <input type="button" id="finishSolution" value="Finish Solution" />
+        <fieldset>
+            <legend>Cell Size</legend>
+                <div style="white-space: nowrap;">
+                    5 <input type="range" min="5" max="100" step="1" value="20" class="slider" id="sizeSlider"
+                        class="center-div"> 100
+                </div>
+        </fieldset>
     </div>
     <p>
-    <canvas id="canvas" width="600" height="600"></canvas>
+        <canvas id="canvas" width="600" height="600"></canvas>
 </body>
 
 </html>

@@ -2,19 +2,27 @@ import {Maze, Direction, Cursor, CursorAndOpen, CursorDirectionAndOpen} from './
 
 export class MazeDraw {
     private ctx: CanvasRenderingContext2D;
-    private width: number;
-    private height: number;
     private backgroundColor = 'black';
     private wallColor = 'white';
-
-    public constructor(canvas: HTMLCanvasElement, private cellWidth: number =  20, private cellHeight: number = 20, private lineWidth = 4) {
+    private cellWidth: number = 20;
+    private cellHeight: number = 20;
+    public constructor(private readonly canvas: HTMLCanvasElement, public readonly xCells: number, private yCells: number, cellWidth: number =  20, cellHeight: number = 20, private lineWidth = 4) {
         const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d');
         if (ctx === null) { throw new Error("Can't get 2D context"); }
         this.ctx = ctx;
-        this.width = canvas.width;
-        this.height = canvas.height;
+        this.setCellSize(cellWidth, cellHeight);
+    }
+
+    /**
+     * Set the cell size. This will erase the canvas. Remember to redraw after calling this.
+     */
+    public setCellSize(cellWidth: number, cellHeight: number): void {
+        this.cellWidth = cellWidth;
+        this.cellHeight = cellHeight;
+        this.canvas.width = cellWidth*this.xCells+this.lineWidth;
+        this.canvas.height = cellHeight*this.yCells+this.lineWidth;
         this.ctx.fillStyle = this.backgroundColor;
-        this.ctx.fillRect(0, 0, canvas.width, canvas.height);
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
     public drawWalls(cursorDirectionAndOpens: CursorDirectionAndOpen[]) {
@@ -24,9 +32,7 @@ export class MazeDraw {
     }
 
     public drawWall(cursorDirectionAndOpen: CursorDirectionAndOpen): void {
-        const cursor = cursorDirectionAndOpen.cursor;
-        const dir = cursorDirectionAndOpen.dir;
-        const open = cursorDirectionAndOpen.open;
+        const {cursor, dir, open} = cursorDirectionAndOpen;
         var x1, y1, w, h;
         const delta = open ? this.lineWidth : 0;
         switch(dir) {
@@ -66,8 +72,7 @@ export class MazeDraw {
     }
 
     public drawCell(cursorAndOpen: CursorAndOpen): void {
-        const cursor = cursorAndOpen.cursor;
-        const open = cursorAndOpen.open;
+        const {cursor, open} = cursorAndOpen;
         const insetStart = this.lineWidth + (open ? 0 : 2*this.lineWidth);
         const insetEnd = this.lineWidth + (open ? 0 : 4*this.lineWidth); 
 
@@ -77,10 +82,12 @@ export class MazeDraw {
             let x = cursor.col * this.cellWidth + insetStart;
             this.ctx.fillRect(x, y, this.cellWidth-insetEnd, this.cellHeight-insetEnd);
         } else {
+            console.log(`cursor=${JSON.stringify(cursor)} ch=${this.cellHeight} insetStart=${insetStart} insetEnd=${insetEnd}`);
             let y1 = cursor.row * this.cellHeight + insetStart;
             let x1 = cursor.col * this.cellWidth + insetStart;
             let y2 = y1 + this.cellHeight - insetEnd;
             let x2 = x1 + this.cellWidth - insetEnd;
+            console.log(`x1=${x1} y1=${y1} x2=${x2} y2=${y2}`);
             let xc = (x1+x2)/2;
             let yc = (y1+y2)/2;
             this.ctx.strokeStyle = this.wallColor;

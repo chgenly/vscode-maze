@@ -256,4 +256,3 @@ function findAllPaths(maze: TestMaze, startCursor: Cursor, endCursor?: Cursor): 
     }
     return [used, solution];
 }
-
