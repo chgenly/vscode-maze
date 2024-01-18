@@ -4,6 +4,7 @@ export class MazeDraw {
     private ctx: CanvasRenderingContext2D;
     private backgroundColor = 'black';
     private wallColor = 'white';
+    private cellColor = '#2554C7';
     private cellWidth: number = 20;
     private cellHeight: number = 20;
     public constructor(private readonly canvas: HTMLCanvasElement, public readonly xCells: number, private yCells: number, cellWidth: number =  20, cellHeight: number = 20, private lineWidth = 4) {
@@ -31,6 +32,22 @@ export class MazeDraw {
         }
     }
 
+
+    /** Draw a wall.  Here is a text drawing of a horizontal with an opening.
+     * Line width is assumed to be 4.
+     *
+     * ----            ----
+     * ----            ----
+     * ----            ----
+     * ----            ----
+     * ||||            ||||  <-- Part of vertical wall
+     *
+     * |< cell width ->|
+     * |<>| line width
+     *      line width |<>|
+     * 
+     * Notice the cell width encompasses the left part of the wall, but not the right 
+    */
     public drawWall(cursorDirectionAndOpen: CursorDirectionAndOpen): void {
         const {cursor, dir, open} = cursorDirectionAndOpen;
         var x1, y1, w, h;
@@ -40,7 +57,7 @@ export class MazeDraw {
                 x1 = cursor.col*this.cellWidth + delta;
                 y1 = cursor.row*this.cellHeight - delta;
                 w = this.cellWidth + this.lineWidth - 2*delta;
-                h = this.lineWidth+2*delta;
+                h = this.lineWidth+2*delta; // Taller than otherwise needed to account for anti-aliasing artifacts.
                 break;
             case Direction.down:
                 x1 = cursor.col*this.cellWidth + delta;
@@ -73,24 +90,22 @@ export class MazeDraw {
 
     public drawCell(cursorAndOpen: CursorAndOpen): void {
         const {cursor, open} = cursorAndOpen;
-        const insetStart = this.lineWidth + (open ? 0 : 2*this.lineWidth);
-        const insetEnd = this.lineWidth + (open ? 0 : 4*this.lineWidth); 
 
         if (open) {
             this.ctx.fillStyle = this.backgroundColor;
-            let y = cursor.row * this.cellHeight + insetStart;
-            let x = cursor.col * this.cellWidth + insetStart;
-            this.ctx.fillRect(x, y, this.cellWidth-insetEnd, this.cellHeight-insetEnd);
+            let y = cursor.row * this.cellHeight + this.lineWidth;
+            let x = cursor.col * this.cellWidth + this.lineWidth;
+            this.ctx.fillRect(x, y, this.cellWidth - this.lineWidth, this.cellHeight - this.lineWidth);
         } else {
-            console.log(`cursor=${JSON.stringify(cursor)} ch=${this.cellHeight} insetStart=${insetStart} insetEnd=${insetEnd}`);
-            let y1 = cursor.row * this.cellHeight + insetStart;
+            const insetStart = this.lineWidth + 2*this.lineWidth;
+            const insetEnd = insetStart + 2*this.lineWidth; 
             let x1 = cursor.col * this.cellWidth + insetStart;
-            let y2 = y1 + this.cellHeight - insetEnd;
+            let y1 = cursor.row * this.cellHeight + insetStart;
             let x2 = x1 + this.cellWidth - insetEnd;
-            console.log(`x1=${x1} y1=${y1} x2=${x2} y2=${y2}`);
+            let y2 = y1 + this.cellHeight - insetEnd;
             let xc = (x1+x2)/2;
             let yc = (y1+y2)/2;
-            this.ctx.strokeStyle = this.wallColor;
+            this.ctx.strokeStyle = this.cellColor;
             this.ctx.beginPath();
             this.ctx.moveTo(x1, y1);
             this.ctx.lineTo(x2, y2);

@@ -3,21 +3,28 @@ import { MazeDraw } from "./mazedraw.js";
 
 let vscode = acquireVsCodeApi();
 
-export function top(canvas: HTMLCanvasElement, speedSlider: HTMLInputElement, sizeSlider: HTMLInputElement, finishGenerationButton: HTMLInputElement,
+export function top(canvas: HTMLCanvasElement, speedSlider: HTMLInputElement, sizeSlider: HTMLInputElement,
+    finishGenerationButton: HTMLInputElement,
     startSolutionButton: HTMLInputElement,
-    finishSolutionButton: HTMLInputElement): void {
+    finishSolutionButton: HTMLInputElement,
+    sizeLegend: HTMLLegendElement): void {
 
     let mazeDraw: MazeDraw;
+    let cellSize = 0;
 
     speedSlider.oninput = function () {
         const speed = parseInt(speedSlider.value);
         vscode.postMessage({ command: "setLogSpeed", value: speed });
     };
     sizeSlider.oninput = function () {
-        const size = parseInt(sizeSlider.value);
-        mazeDraw.setCellSize(size, size);
-        vscode.postMessage({ command: "getState"});
+        cellSize = parseInt(sizeSlider.value);
+        sizeLegend.textContent = "Cell Size: " + cellSize;
+        if (mazeDraw) {
+            mazeDraw.setCellSize(cellSize, cellSize);
+            vscode.postMessage({ command: "getState" });
+        }
     };
+    sizeSlider.oninput(new Event(""));
     speedSlider.oninput(new Event(""));
     finishGenerationButton.onclick = () => vscode.postMessage({ command: "finishGeneration" });
     startSolutionButton.onclick = () => vscode.postMessage({ command: "startSolution" });
@@ -25,15 +32,12 @@ export function top(canvas: HTMLCanvasElement, speedSlider: HTMLInputElement, si
     vscode.postMessage({ command: "getDimensions" });
     window.addEventListener('message', event => {
         let message = event.data;
-        console.log(JSON.stringify(message));
         switch (message.command) {
             case "dimensions":
                 const lineWidth = 4;
                 const xCells = message.width;
                 const yCells = message.height;
-                const cellWidth = 20;
-                const cellHeight = 20;
-                mazeDraw = new MazeDraw(canvas, xCells, yCells, cellWidth, cellHeight, lineWidth);
+                mazeDraw = new MazeDraw(canvas, xCells, yCells, cellSize, cellSize, lineWidth);
                 // This will cause all walls and cells to be drawn.
                 vscode.postMessage({ command: "getState" });
                 break;

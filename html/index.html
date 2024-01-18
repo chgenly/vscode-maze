@@ -21,7 +21,9 @@
         function go() {
             mz.top(document.getElementById("canvas"), document.getElementById("speedSlider"), document.getElementById("sizeSlider"), document.getElementById("finishGeneration"),
                 document.getElementById("startSolution"),
-                document.getElementById("finishSolution"));
+                document.getElementById("finishSolution"),
+                document.getElementById("sizeLegend")
+                );
         }
     </script>
     <div style="display: flex;justify-content: space-between;">
@@ -36,9 +38,9 @@
         <input type="button" id="startSolution" value="Start Solution" />
         <input type="button" id="finishSolution" value="Finish Solution" />
         <fieldset>
-            <legend>Cell Size</legend>
+            <legend id="sizeLegend">Cell Size</legend>
                 <div style="white-space: nowrap;">
-                    5 <input type="range" min="5" max="100" step="1" value="20" class="slider" id="sizeSlider"
+                    14 <input type="range" min="14" max="200" step="1" value="20" class="slider" id="sizeSlider"
                         class="center-div"> 100
                 </div>
         </fieldset>
