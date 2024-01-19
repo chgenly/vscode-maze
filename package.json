@@ -1,13 +1,15 @@
 {
   "author": "chgenly@gmail.com",
   "license": "MIT",
-  "publisher": "genly",
+  "publisher": "Chris Genly",
   "name": "maze",
   "displayName": "maze",
   "description": "Build and solve mazes",
-  "version": "0.0.1",
+  "keywords": ["maze", "vscode", "visual studio code", "typescript"],
+  "version": "1.0.0",
   "repository": {
-    "directory": "."
+    "type": "git",
+    "url": "https://github.com/chgenly/vscode-maze"
   },
   "engines": {
     "vscode": "^1.85.0"
