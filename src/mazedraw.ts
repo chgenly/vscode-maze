@@ -26,6 +26,7 @@ export class MazeDraw {
         var style = getComputedStyle(document.body);
         this.backgroundColor = style.getPropertyValue('--vscode-editor-background');
         this.wallColor = style.getPropertyValue('--vscode-editor-foreground');
+        this.cellColor = style.getPropertyValue('--vscode-editor-findMatchHighlightBackground');
     }
 
     /**
@@ -111,13 +112,11 @@ export class MazeDraw {
 
     public drawCell(cursorAndOpen: CursorAndOpen): void {
         const { cursor, open } = cursorAndOpen;
-
-        if (open) {
-            this.ctx.fillStyle = this.backgroundColor;
-            let y = cursor.row * this.cellHeight + this.lineWidth;
-            let x = cursor.col * this.cellWidth + this.lineWidth;
-            this.ctx.fillRect(x, y, this.cellWidth - this.lineWidth, this.cellHeight - this.lineWidth);
-        } else {
+        this.ctx.fillStyle = this.backgroundColor;
+        let y = cursor.row * this.cellHeight + this.lineWidth;
+        let x = cursor.col * this.cellWidth + this.lineWidth;
+        this.ctx.fillRect(x, y, this.cellWidth - this.lineWidth, this.cellHeight - this.lineWidth);
+        if (!open) {
             if (this.tooSmall) {
                 this.drawBox(cursor);
             } else {
