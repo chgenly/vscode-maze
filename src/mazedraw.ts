@@ -2,8 +2,8 @@ import { Maze, Direction, Cursor, CursorAndOpen, CursorDirectionAndOpen } from '
 
 export class MazeDraw {
     private ctx: CanvasRenderingContext2D;
-    private backgroundColor = 'black';
-    private wallColor = 'white';
+    private backgroundColor = 'light-dark("red", "green")';//'black';
+    private wallColor = 'light-dark("green", "red")';
     private cellColor = '#2554C7';
     private cellWidth: number = 20;
     private cellHeight: number = 20;
@@ -11,14 +11,21 @@ export class MazeDraw {
     private lineWidth: number = 4;
 
     public constructor(private readonly canvas: HTMLCanvasElement,
-        private readonly xCells: number,  private yCells: number,
+        private readonly xCells: number, private yCells: number,
         cellWidth: number = 20, cellHeight: number = 20,
         private desiredLineWidth = 4) {
 
+        this.getBodyColors();
         const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d');
         if (ctx === null) { throw new Error("Can't get 2D context"); }
         this.ctx = ctx;
         this.setCellSize(cellWidth, cellHeight);
+    }
+
+    public getBodyColors(): void {
+        var style = getComputedStyle(document.body);
+        this.backgroundColor = style.getPropertyValue('--vscode-editor-background');
+        this.wallColor = style.getPropertyValue('--vscode-editor-foreground');
     }
 
     /**
@@ -122,17 +129,17 @@ export class MazeDraw {
     private readonly smallestAsteriskSize = 3;
 
     private isTooSmall(lineWidth: number): boolean {
-        const interiorWidth = this.cellWidth - 2*lineWidth; // Remove left and right walls.
-        const interiorHeight = this.cellHeight - 2*lineWidth;
-        const asteriskWidth = interiorWidth - 2*this.asteriskMargin(lineWidth);
-        const asteriskheight = interiorHeight - 2*this.asteriskMargin(lineWidth);
+        const interiorWidth = this.cellWidth - 2 * lineWidth; // Remove left and right walls.
+        const interiorHeight = this.cellHeight - 2 * lineWidth;
+        const asteriskWidth = interiorWidth - 2 * this.asteriskMargin(lineWidth);
+        const asteriskheight = interiorHeight - 2 * this.asteriskMargin(lineWidth);
         return asteriskWidth < this.smallestAsteriskSize || asteriskheight < this.smallestAsteriskSize;
     }
 
     /**
      * @returns Margin required by asterisk on the interior of a cell.
      */
-    private asteriskMargin(lineWidth:  number): number {
+    private asteriskMargin(lineWidth: number): number {
         return 2 * lineWidth;
     }
 
@@ -145,7 +152,7 @@ export class MazeDraw {
         let y1 = cellY + this.lineWidth + margin;
         let x2 = cellX + this.cellWidth - margin;
         let y2 = cellY + this.cellHeight - margin;
-        this.ctx.fillRect(x1, y1, x2-x1, y2-y1);
+        this.ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
     }
 
     private drawAsterisk(cursor: Cursor): void {

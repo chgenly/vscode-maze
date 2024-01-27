@@ -34,6 +34,9 @@ export function activate(context: vscode.ExtensionContext) {
             mazeDriver.onDidReceiveMessage(message);
           });
           getWebviewContent(context, panel);
+          vscode.window.onDidChangeActiveColorTheme(() => {
+            mazeDriver.onDidChangeActiveColorTheme();
+          }); 
           panel.onDidDispose(() => {
             const ix = panels.findIndex(p => p === panel);
             if (ix !== -1) {

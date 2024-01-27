@@ -122,6 +122,10 @@ export class MazeDriver {
     }
   }
 
+  public onDidChangeActiveColorTheme(): void {
+    this.webView.postMessage({command: "themeChanged"});
+  }
+
   onDidReceiveMessage(message: any): void {
     switch (message.command) {
       case "alert":

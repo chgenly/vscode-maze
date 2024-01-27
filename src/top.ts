@@ -70,6 +70,10 @@ export function top(canvas: HTMLCanvasElement, speedSlider: HTMLInputElement, si
             case "setFinishSolutionEnable":
                 finishSolutionButton.disabled = !message.enable;
                 break;
+            case "themeChanged":
+                mazeDraw.getBodyColors();
+                vscode.postMessage({ command: "getState" });
+                break;
         }
     });
 }
