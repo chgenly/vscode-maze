@@ -16,7 +16,6 @@
 </head>
 
 <body onload="go()">
-    <h1>Maze</h1>
     <script>
         function go() {
             mz.top(document.getElementById("canvas"), document.getElementById("speedSlider"), document.getElementById("sizeSlider"), document.getElementById("finishGeneration"),
@@ -26,27 +25,31 @@
                 );
         }
     </script>
-    <div style="display: flex;justify-content: space-between;">
-        <fieldset>
-            <legend>Draw Speed</legend>
-            <div style="white-space: nowrap;">
-                Slow <input type="range" min="-3" max="-1" step=".1" value="-2" class="slider" id="speedSlider"
-                    class="center-div"> Fast
-            </div>
-        </fieldset>
-        <input type="button" id="finishGeneration" value="Finish Generation" />
-        <input type="button" id="startSolution" value="Start Solution" />
-        <input type="button" id="finishSolution" value="Finish Solution" />
-        <fieldset>
-            <legend id="sizeLegend">Cell Size</legend>
+    <div style="display:flex; flex-direction: column; height: 100vh">
+        <div style="display: flex;justify-content: space-between; flex-shrink: 0;">
+            <h1>Maze</h1>
+            <fieldset>
+                <legend>Draw Speed</legend>
                 <div style="white-space: nowrap;">
-                    5 <input type="range" min="5" max="200" step="1" value="28" class="slider" id="sizeSlider"
-                        class="center-div"> 100
+                    Slow <input type="range" min="-3" max="-1" step=".1" value="-2" class="slider" id="speedSlider"
+                        class="center-div"> Fast
                 </div>
-        </fieldset>
-    </div>
-    <p>
-        <canvas id="canvas" width="600" height="600"></canvas>
+            </fieldset>
+            <input type="button" id="finishGeneration" value="Finish Generation" />
+            <input type="button" id="startSolution" value="Start Solution" />
+            <input type="button" id="finishSolution" value="Finish Solution" />
+            <fieldset>
+                <legend id="sizeLegend">Cell Size</legend>
+                    <div style="white-space: nowrap;">
+                        5 <input type="range" min="5" max="200" step="1" value="28" class="slider" id="sizeSlider"
+                            class="center-div"> 100
+                    </div>
+            </fieldset>
+        </div>
+        <p style="overflow: auto; white-space: nowrap">
+            <canvas id="canvas" width="600" height="600"></canvas>
+        </p>
+    <div>
 </body>
 
 </html>
