@@ -1,4 +1,7 @@
-import { Maze, Direction, Cursor, CursorAndOpen, CursorDirectionAndOpen } from './maze.js';
+import { Direction, Cursor, CursorAndOpen, CursorDirectionAndOpen } from './maze.js';
+import { Rectangle } from './rectangle.js';
+
+export type MazeDrawFocusOnRectangle = (rect: Rectangle) => void;
 
 export class MazeDraw {
     private ctx: CanvasRenderingContext2D;
@@ -9,11 +12,13 @@ export class MazeDraw {
     private cellHeight: number = 20;
     private tooSmall: boolean = false;
     private lineWidth: number = 4;
+    private enableListener: boolean = true;
 
     public constructor(private readonly canvas: HTMLCanvasElement,
         private readonly xCells: number, private yCells: number,
         cellWidth: number = 20, cellHeight: number = 20,
-        private desiredLineWidth = 4) {
+        private desiredLineWidth = 4,
+        private readonly listener: MazeDrawFocusOnRectangle) {
 
         this.getBodyColors();
         const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d');
@@ -49,9 +54,11 @@ export class MazeDraw {
     }
 
     public drawWalls(cursorDirectionAndOpens: CursorDirectionAndOpen[]) {
+        this.enableListener = false;
         for (const cdo of cursorDirectionAndOpens) {
             this.drawWall(cdo);
         }
+        this.enableListener = true;
     }
 
 
@@ -72,7 +79,7 @@ export class MazeDraw {
     */
     public drawWall(cursorDirectionAndOpen: CursorDirectionAndOpen): void {
         const { cursor, dir, open } = cursorDirectionAndOpen;
-        var x1, y1, w, h;
+        var x1, y1, w, h, extendWidth=0, extendHeight=0;
         const delta = open ? this.lineWidth : 0;
         switch (dir) {
             case Direction.up:
@@ -80,41 +87,55 @@ export class MazeDraw {
                 y1 = cursor.row * this.cellHeight - delta;
                 w = this.cellWidth + this.lineWidth - 2 * delta;
                 h = this.lineWidth + 2 * delta; // Taller than otherwise needed to account for anti-aliasing artifacts.
+                extendHeight = this.cellHeight;
                 break;
             case Direction.down:
                 x1 = cursor.col * this.cellWidth + delta;
                 y1 = (cursor.row + 1) * this.cellHeight - delta;
                 w = this.cellWidth + this.lineWidth - 2 * delta;
                 h = this.lineWidth + 2 * delta;
+                extendHeight = this.cellHeight;
                 break;
             case Direction.left:
                 x1 = cursor.col * this.cellWidth - delta;
                 y1 = cursor.row * this.cellHeight + delta;
                 w = this.lineWidth + 2 * delta;
                 h = this.cellHeight + this.lineWidth - 2 * delta;
+                extendWidth = this.cellWidth;
                 break;
             case Direction.right:
                 x1 = (cursor.col + 1) * this.cellWidth - delta;
                 y1 = cursor.row * this.cellHeight + delta;
                 w = this.lineWidth + 2 * delta;
                 h = this.cellHeight + this.lineWidth - 2 * delta;
+                extendWidth = this.cellWidth;
                 break;
         }
         this.ctx.fillStyle = open ? this.backgroundColor : this.wallColor;
         this.ctx.fillRect(x1, y1, w, h);
+
+        if (this.enableListener) {
+            const r = Rectangle.xywh(x1, y1, w, h);
+            const er = Rectangle.xyxy(r.x1-extendWidth, r.y1-extendHeight, r.x1+extendWidth, r.y2+extendHeight);
+            this.listener(er);
+        }
     }
 
     public drawCells(cursorsAndOpens: CursorAndOpen[]): void {
+        this.enableListener = false;
         for (const co of cursorsAndOpens) {
             this.drawCell(co);
         }
+        this.enableListener = true;
     }
 
     public drawCell(cursorAndOpen: CursorAndOpen): void {
         const { cursor, open } = cursorAndOpen;
         this.ctx.fillStyle = this.backgroundColor;
-        let y = cursor.row * this.cellHeight + this.lineWidth;
-        let x = cursor.col * this.cellWidth + this.lineWidth;
+        const cellX = cursor.col * this.cellWidth;
+        const cellY = cursor.row * this.cellHeight;
+        let x = cellX + this.lineWidth;
+        let y = cellY + this.lineWidth;
         this.ctx.fillRect(x, y, this.cellWidth - this.lineWidth, this.cellHeight - this.lineWidth);
         if (!open) {
             if (this.tooSmall) {
@@ -122,6 +143,11 @@ export class MazeDraw {
             } else {
                 this.drawAsterisk(cursor);
             }
+        }
+        if (this.enableListener) {
+            this.listener(
+                Rectangle.xywh(cellX, cellY, this.cellWidth + this.lineWidth, this.cellHeight + this.lineWidth)
+            );
         }
     }
 

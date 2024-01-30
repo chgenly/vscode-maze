@@ -18,7 +18,11 @@
 <body onload="go()">
     <script>
         function go() {
-            mz.top(document.getElementById("canvas"), document.getElementById("speedSlider"), document.getElementById("sizeSlider"), document.getElementById("finishGeneration"),
+            mz.top(document.getElementById("canvasContainer"), 
+                document.getElementById("canvas"), 
+                document.getElementById("speedSlider"), 
+                document.getElementById("sizeSlider"), 
+                document.getElementById("finishGeneration"),
                 document.getElementById("startSolution"),
                 document.getElementById("finishSolution"),
                 document.getElementById("sizeLegend")
@@ -46,9 +50,9 @@
                     </div>
             </fieldset>
         </div>
-        <p style="overflow: auto; white-space: nowrap">
+        <div style="overflow: auto; white-space: nowrap" id="canvasContainer">
             <canvas id="canvas" width="600" height="600"></canvas>
-        </p>
+        </div>
     <div>
 </body>
 

@@ -1,9 +1,11 @@
+import { CONNREFUSED } from "dns";
 import { CursorDirectionAndOpen, Cursor, CursorAndOpen, Maze } from "./maze.js";
 import { MazeDraw } from "./mazedraw.js";
+import { Rectangle } from "./rectangle.js";
 
 let vscode = acquireVsCodeApi();
 
-export function top(canvas: HTMLCanvasElement, speedSlider: HTMLInputElement, sizeSlider: HTMLInputElement,
+export function top(canvasContainer: HTMLDivElement, canvas: HTMLCanvasElement, speedSlider: HTMLInputElement, sizeSlider: HTMLInputElement,
     finishGenerationButton: HTMLInputElement,
     startSolutionButton: HTMLInputElement,
     finishSolutionButton: HTMLInputElement,
@@ -37,7 +39,8 @@ export function top(canvas: HTMLCanvasElement, speedSlider: HTMLInputElement, si
                 const lineWidth = 4;
                 const xCells = message.width;
                 const yCells = message.height;
-                mazeDraw = new MazeDraw(canvas, xCells, yCells, cellSize, cellSize, lineWidth);
+                mazeDraw = new MazeDraw(canvas, xCells, yCells, cellSize, cellSize, lineWidth,
+                    focusOnMazeRectangle);
                 // This will cause all walls and cells to be drawn.
                 vscode.postMessage({ command: "getState" });
                 break;
@@ -76,4 +79,22 @@ export function top(canvas: HTMLCanvasElement, speedSlider: HTMLInputElement, si
                 break;
         }
     });
+    function focusOnMazeRectangle(cell: Rectangle) {
+        let viewport = Rectangle.xywh(canvasContainer.scrollLeft, canvasContainer.scrollTop,
+            canvasContainer.clientWidth, canvasContainer.clientHeight);
+        if (viewport.isBelowTop(cell)) {
+            viewport = viewport.alignTopWith(cell.y1);
+        }
+        if (viewport.isAboveBottom(cell)) {
+            viewport = viewport.alignBottomWith(cell.y2);
+        }
+        if (viewport.isRightOfLeft(cell)) {
+            viewport = viewport.alignLeftWith(cell.x1);
+        }
+        if (viewport.isLeftOfRight(cell)) {
+            viewport = viewport.alignRightWith(cell.x2);
+        }
+        canvasContainer.scrollTop = viewport.y1;
+        canvasContainer.scrollLeft = viewport.x1;
+    }
 }
